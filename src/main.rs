@@ -2,21 +2,22 @@ use timer::Timer;
 mod tools;
 mod timer;
 mod day01;
+mod day02;
 
 fn main() {
-
+/*
     {
         let _timer = Timer::new();
         let day1_data    = tools::read_1d_i32("data/day01.txt");
         day01::solve(&day1_data);
     }
-/*
+*/
     {
         let _timer = Timer::new();
         let day2_data  = tools::read_1d_string("data/day02.txt");
         day02::solve(&day2_data);
     }
-
+/*
     {
         let _timer = Timer::new();
         let day3_data  = tools::read_1d_string("data/day03.txt");
