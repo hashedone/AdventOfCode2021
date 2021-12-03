@@ -43,7 +43,7 @@ pub fn part2(data:&Vec<String>)->i32
 #[allow(unused)]
 pub fn solve(data:&Vec<String>)
 {    
-    println!("Day1");
+    println!("Day2");
     println!("part1:{}",part1(data));
     println!("part2:{}",part2(data));
 }

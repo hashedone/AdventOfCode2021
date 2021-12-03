@@ -3,6 +3,7 @@ mod tools;
 mod timer;
 mod day01;
 mod day02;
+mod day03;
 
 fn main() {
 /*
@@ -11,19 +12,20 @@ fn main() {
         let day1_data    = tools::read_1d_i32("data/day01.txt");
         day01::solve(&day1_data);
     }
-*/
+
     {
         let _timer = Timer::new();
         let day2_data  = tools::read_1d_string("data/day02.txt");
         day02::solve(&day2_data);
     }
-/*
+    */
+
     {
         let _timer = Timer::new();
         let day3_data  = tools::read_1d_string("data/day03.txt");
         day03::solve(&day3_data);
     }
-
+/*
     {
         let _timer = Timer::new();
         let day4_data  = tools::read_1d_string("data/day04.txt");
