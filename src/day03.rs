@@ -9,18 +9,15 @@ fn how_many(data:&Vec<String>, x:usize)->(i32,i32)
 
 pub fn part1(data:&Vec<String>)->i32
 {
-    let mut gamma   = 0;
-    let mut epsilon = 0;
-
-    for x in 0..data[0].len()
-    {
-          gamma*=2;
-        epsilon*=2;
-        let cnt = how_many(data,x);
-        if cnt.0>cnt.1 {   gamma|=1; }
-                  else { epsilon|=1; }
-    }
-
+    let (gamma,epsilon) = data[0].chars()
+                                 .enumerate()
+                                 .fold((0,0), 
+                                       |(gamma,epsilon),(id,_)|
+                                       {
+                                           let cnt = how_many(data,id);                                        
+                                           if cnt.0>cnt.1 { (gamma<<1 | 1,epsilon<<1    ) }
+                                                     else { (gamma<<1    ,epsilon<<1 | 1) }
+                                       } );
     gamma*epsilon
 }
 
@@ -28,13 +25,13 @@ fn get_more(data:&Vec<String>,pos_x:usize,oxygen:bool)->i32
 {
     if data.len()==1 
     {
-        return i32::from_str_radix(&data[0].to_owned(), 2).unwrap();
+        return i32::from_str_radix(&data[0][..], 2).unwrap();
     }
 
     let cnt = how_many(data,pos_x);
     let c   = if oxygen {  if cnt.0>cnt.1 {'0'} else {'1'}  }
                    else {  if cnt.0>cnt.1 {'1'} else {'0'}  };
-   
+
     get_more(&data.iter()
                   .filter(|s| s.chars().nth(pos_x).unwrap()==c)
                   .map(|s| s.clone())
