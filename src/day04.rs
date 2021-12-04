@@ -1,8 +1,10 @@
 use std::collections::{HashSet};
 
+const N : usize = 5;
+
 struct Board
 {
-    hash : HashSet<i32>,
+    used : HashSet<i32>,
     tab  : Vec<Vec<i32>>,
 }
 
@@ -10,86 +12,87 @@ impl Board
 {
     fn new()->Self
     {
-        Board {
-            hash : HashSet::new(),
-            tab  : vec![vec![0;5];5],
+        Self {
+            used : HashSet::new(),
+            tab  : vec![vec![0;N];N],
         }        
+    }
+
+    fn from_vec(s:Vec<String>)->Self
+    {
+        let mut board = Board::new();
+        board.fill(s);
+        board
     }
 
     fn fill(&mut self,s:Vec<String>)
     {
-        for (y,l) in s.iter().enumerate() {
-            let num = get_num(&l,' ');
-            for (id,&v) in num.iter().enumerate() {
+        for (y,l) in s.iter().enumerate() 
+        {
+            let num = get_numbers(&l);
+            for (id,&v) in num.iter().enumerate() 
+            {
                 self.tab[y][id] = v;
             }
         }
     }
 
-    fn bingo(&mut self, n:i32)->bool 
+    fn bingo(&mut self,n:i32)->bool 
     {
-        self.hash.insert(n);
+        self.used.insert(n);
 
-        for y in 0..5 
+        for i in 0..N 
         {
-            let mut cnt=0;
-            for x in 0..5 
-            {
-                if self.hash.contains(&self.tab[y][x]) {cnt+=1}                
-            }    
-            if cnt==5 {return true;}
-        }
+            if (0..N).into_iter()
+                     .filter(|&x| self.used.contains(&self.tab[i][x]))
+                     .count()==N { return true } 
 
-        for y in 0..5 
-        {
-            let mut cnt=0;
-            for x in 0..5 
-            {
-                if self.hash.contains(&self.tab[x][y]) {cnt+=1}                
-            }    
-            if cnt==5 {return true;}
+            if (0..N).into_iter()
+                     .filter(|&y| self.used.contains(&self.tab[y][i]))
+                     .count()==N { return true } 
         }
-        
+      
         false
     }
 
-    fn sum(&self)->i32 {
+    fn sum(&self)->i32 
+    {
         self.tab
             .iter()
             .flatten()
-            .filter(|x|!self.hash.contains(x))
+            .filter(|x|!self.used.contains(x))
             .sum::<i32>()
     }
 }
 
-fn get_num(s:&String,c:char)->Vec<i32>
+fn get_numbers(s:&String)->Vec<i32>
 {
     s.split_whitespace()
      .map(|s| s.parse::<i32>().unwrap())
      .collect::<Vec<i32>>()
 }
 
-pub fn part1(data:&Vec<String>)->i32
+fn prepare_data(data:&Vec<String>)->(Vec<i32>,Vec<Board>)
 {
-    let num = get_num(&data[0].replace(','," "),',');
-    println!("{:?}",num);
+    let        num = get_numbers(&data[0].replace(','," "));
     let mut boards = vec![];
 
-    for i in 2..data.len() {
-        if (i-2)%6==0 {
-            let mut b = Board::new();
-            b.fill([data[i].clone(),data[i+1].clone(),data[i+2].clone(),data[i+3].clone(),data[i+4].clone()].to_vec());
-            boards.push(b);
-            
-        }
+    for i in (2..data.len()).step_by(N+1)
+    {
+        boards.push(Board::from_vec(data[i..i+N].to_vec()));
     }
+    (num,boards)
+}
 
-    for v in num {
-        for (id,b) in boards.iter_mut().enumerate(){
-            if b.bingo(v) {
-                println!("{} {} {}",id,v,b.sum());
-                return v*b.sum();
-            }
+pub fn part1(data:&Vec<String>)->i32
+{
+    let (num,mut boards) = prepare_data(data);
+
+    for v in num 
+    {
+        for b in boards.iter_mut() 
+        {
+            if b.bingo(v) { return v*b.sum(); }
         }
     }
     0
@@ -97,32 +100,23 @@ pub fn part1(data:&Vec<String>)->i32
 
 pub fn part2(data:&Vec<String>)->i32
 {
-    let num = get_num(&data[0].replace(','," "),',');
-    let mut boards = vec![];
+    let (num,mut boards) = prepare_data(data);
 
-    for i in 2..data.len() {
-        if (i-2)%6==0 {
-            let mut b = Board::new();
-            b.fill([data[i].clone(),data[i+1].clone(),data[i+2].clone(),data[i+3].clone(),data[i+4].clone()].to_vec());
-            boards.push(b);
-            
-        }
-    }
-    let count= boards.len();
+    let count   = boards.len();
     let mut won = HashSet::new();
 
-    for v in num {
-        for (id,b) in boards.iter_mut().enumerate(){
-            if b.bingo(v) {
+    for v in num 
+    {
+        for (id,b) in boards.iter_mut().enumerate()
+        {
+            if b.bingo(v) 
+            {
                 won.insert(id);
-                if won.len()==count {
-                    return v*b.sum();
-                }
+                if won.len()==count { return v*b.sum(); }
             }
         }
-        
     }
-0
+    0
 }
 
 #[allow(unused)]
