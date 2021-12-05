@@ -11,46 +11,15 @@ fn draw(data:&Vec<String>,diagonal:bool)->i32
     let mut field: HashMap<(i32,i32),i32> = HashMap::new();
 
     for l in data {
-        let  v: Vec<_>   = l.split(" -> ").collect();
-        let p1 = get_point(&v[0].to_string());
-        let p2 = get_point(&v[1].to_string());
+        let  v: Vec<_>  = l.split(" -> ").collect();
+        let (p1_x,p1_y) = get_point(&v[0].to_string());
+        let (p2_x,p2_y) = get_point(&v[1].to_string());
 
-        let mut n = 1 + i32::max(i32::abs(p2.0-p1.0),i32::abs(p2.1-p1.1));
+        let (dx,dy) = (i32::signum(p2_x-p1_x),i32::signum(p2_y-p1_y));
+        let n = if !diagonal && dx!=0 && dy!=0 { 0 } 
+                                          else { 1 + i32::max(i32::abs(p2_x-p1_x),i32::abs(p2_y-p1_y)) };
 
-        let (dx,dy) =      
-        if p1.0==p2.0 
-        { 
-            if p1.1<p2.1 { ( 0, 1) } 
-                    else { ( 0,-1) } 
-        }
-          else if p1.1==p2.1
-        {
-            if p1.0<p2.0 { ( 1, 0) } 
-                    else { (-1, 0) } 
-        }
-          else
-        {
-            if diagonal 
-            {
-                if p1.0<p2.0 
-                { 
-                    if p1.1<p2.1 { ( 1, 1) } 
-                            else { ( 1,-1) }             
-                } 
-                  else 
-                { 
-                    if p1.1<p2.1 { (-1, 1) } 
-                            else { (-1,-1) }             
-                }             
-            }
-              else       
-            {             
-                n = 0;
-                ( 0, 0)
-            }
-        };
-
-        let (mut x,mut y) = p1;
+        let (mut x,mut y) = (p1_x,p1_y);
         for _ in 0..n 
         {
             let point = (x,y);
@@ -59,9 +28,11 @@ fn draw(data:&Vec<String>,diagonal:bool)->i32
             y+=dy;
         }
     }
-    field.values().filter(|&&v|v>1).count() as i32
+    
+    field.values()
+         .filter(|&&v|v>1)
+         .count() as i32
 }
-
 
 pub fn part1(data:&Vec<String>)->i32
 {
