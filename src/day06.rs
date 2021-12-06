@@ -6,8 +6,8 @@ fn count(data:&Vec<String>,iterations:i32)->i64
 
     for _ in 0..iterations
     {
-        let count_new = tab.into_iter()
-                           .fold(0, |sum,(x,count)| if x==0 {sum + count} else {sum});
+        let count_new = tab.iter()
+                           .fold(0, |sum,(x,count)| if x==&0 {sum + count} else {sum});
 
         tab = tab.into_iter()
                  .map(|(value,count)|
