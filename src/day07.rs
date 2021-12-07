@@ -1,37 +1,35 @@
 fn count(data:&Vec<String>,part_two:bool)->i64
 {
-    let mut tab : Vec<i32> = data[0].split(',')
-                                            .map(|d| d.parse().unwrap())
-                                            .collect();
-    tab.sort();
+    let tab : Vec<i64> = data[0].split(',')
+                                .map(|d| d.parse().unwrap())
+                                .collect();
 
-    let mut dist_min = i64::MAX;
+    let (minv,maxv) = (*tab.iter().min().unwrap(),*tab.iter().max().unwrap());
 
-    let mut cc = vec![];
-    let mut ss = 0;
-    for pp in 0..2000 {
-        ss+=pp;
-        cc.push(ss);
-    }
 
-    for p in tab[0]..tab[tab.len()-1]
-    {        
-        let dist  = tab.iter().map(|&x|
-            {
-                let id = i64::abs(x as i64 - p as i64);
-                if part_two { cc[id as usize] } else { id } 
-            }
-        ).sum();
-        
-        if dist<dist_min {
-            dist_min = dist;
+    let mut temp_sum=0;
+
+    let sums : Vec<i64> = 
+    (0..=maxv-minv)
+    .into_iter()
+    .map(|i|
+        {
+            temp_sum+=i;
+            if part_two { temp_sum }
+                   else {        i }
         }
-    }
+    ).collect();
 
-    dist_min
-
-//    tab.into_iter()
-  //     .fold(0i64, |sum,(_,c)| sum + c as i64)
+    (minv..=maxv)
+    .into_iter()
+    .map(|p|
+    {        
+        tab.iter()
+           .map(|&x| { sums[i64::abs(x - p) as usize] })
+           .sum()
+    })
+    .min()
+    .unwrap()
 }
 
 pub fn part1(data:&Vec<String>)->i64
