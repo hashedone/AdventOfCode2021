@@ -6,19 +6,11 @@ fn count(data:&Vec<String>,part_two:bool)->i64
 
     let (minv,maxv) = (*tab.iter().min().unwrap(),*tab.iter().max().unwrap());
 
-
-    let mut temp_sum=0;
-
     let sums : Vec<i64> = 
     (0..=maxv-minv)
     .into_iter()
-    .map(|i|
-        {
-            temp_sum+=i;
-            if part_two { temp_sum }
-                   else {        i }
-        }
-    ).collect();
+    .scan(0,|acc,x| { *acc+=x; if part_two {Some(*acc)} else {Some(x)}})
+    .collect();
 
     (minv..=maxv)
     .into_iter()
