@@ -1,14 +1,16 @@
+use std::collections::{HashMap};
 
 pub fn part1(data:&Vec<String>)->i32
 {
     data.iter()
         .map(|line|
             {
-              let tab : Vec<&str> = line.split('|').collect();
-              tab[1].split_whitespace()
-                    .map(|s| s.len())
-                    .filter(|&n| n==2 || n==4 || n==3 || n==7)
-                    .count() as i32
+              line.split('|')
+                  .collect::<Vec<&str>>()[1]
+                  .split_whitespace()
+                  .map(|s| s.len())
+                  .filter(|&n| n==2 || n==4 || n==3 || n==7)
+                  .count() as i32
             }
         ).sum()
 }
@@ -32,74 +34,60 @@ fn calc(line : String)->i32
     let cmd  : Vec<&str> = line.split('|').collect();
     let cmd1 : Vec<_>    = cmd[0].split_whitespace().map(|s| sort_str(s).to_owned()).collect();
     let cmd2 : Vec<_>    = cmd[1].split_whitespace().map(|s| sort_str(s).to_owned()).collect();
- 
-    //println!("1:{:?}",&cmd1);
-    //println!("2:{:?}",&cmd2);
 
-    let digits = vec![
-        "abcefg" ,//0
-        "cf"     ,//1
-        "acdeg"  ,//2
-        "acdfg"  ,//3
-        "bcdf"   ,//4
-        "abdfg"  ,//5
-        "abdefg" ,//6
-        "acf"    ,//7
-        "abcdefg",//8
-        "abcdfg" ,//9
-    ];
+    let digits : HashMap<&str,i32> = 
+    [    
+        ("abcefg" ,0),
+        ("cf"     ,1),
+        ("acdeg"  ,2),
+        ("acdfg"  ,3),
+        ("bcdf"   ,4),
+        ("abdfg"  ,5),
+        ("abdefg" ,6),
+        ("acf"    ,7),
+        ("abcdefg",8),
+        ("abcdfg" ,9),
+    ].iter().cloned().collect();
 
-    for a in 'a'..='g'
+    for a in 'a'..='g' {
+    for b in 'a'..='g' { if b!=a {
+    for c in 'a'..='g' { if c!=a && c!=b {
+    for d in 'a'..='g' { if d!=a && d!=b && d!=c {        
+    for e in 'a'..='g' { if e!=a && e!=b && e!=c && e!=d {            
+    for f in 'a'..='g' { if f!=a && f!=b && f!=c && f!=d && f!=e {                    
+    for g in 'a'..='g' { if g!=a && g!=b && g!=c && g!=d && g!=e && g!=f  
     {
-        for b in 'a'..='g' {
-        if b!=a 
-        {
-            for c in 'a'..='g' {
-            if c!=a && c!=b
+            let mut ok=0;
+            let perm = [a,b,c,d,e,f,g].to_vec();
+
+            for command in cmd1.iter() 
             {
-                for d in 'a'..='g' {
-                    if d!=a && d!=b && d!=c
-                {        
-                    for e in 'a'..='g' {
-                    if e!=a && e!=b && e!=c && e!=d
-                    {            
-                        for f in 'a'..='g' {
-                        if f!=a && f!=b && f!=c && f!=d && f!=e
-                        {                    
-                            for g in 'a'..='g' {
-                            if g!=a && g!=b && g!=c && g!=d && g!=e && g!=f
-                            {                    
-                                let mut ok=0;
+                let ss = convert(command,&perm);
+                let so = sort_str(&ss.to_owned());
+                if !digits.contains_key(&&so[..]) { break; }
 
-                                for command in cmd1.iter() 
-                                {
-                                    let ss = convert(command,&[a,b,c,d,e,f,g].to_vec());
-                                    let so = sort_str(&ss.to_owned());
-                                    if !digits.contains(&&so[..]) { break; }
+                ok+=1;
+            }
 
-                                    ok+=1;
-                                }
+            if ok==10
+            {
+                let mut res = [0,0,0,0];
 
-                                if ok==10
-                                {
-                                    let mut res = [0,0,0,0];
+                for i in 0..4 
+                {
+                    let s      = convert(&cmd2[i],&perm);
+                    let sorted = sort_str(&s[..]);
+                    res[i]     = *digits.get(&&sorted[..]).unwrap();
+                }
 
-                                    for i in 0..4 
-                                    {
-                                        let s = convert(&cmd2[i],&[a,b,c,d,e,f,g].to_vec());
-                                        let sorted = sort_str(&s[..]);
-                                        res[i] = digits.iter().position(|&s| s.to_string()==sorted).unwrap();
-                                    }
-
-                                    return (res[0]*1000 + res[1]*100 + res[2]*10 + res[3]*1) as i32;
-                                }
-                            }}
-                        }}
-                    }}
-                }}
-            }}
-                
+                return (res[0]*1000 + res[1]*100 + res[2]*10 + res[3]*1) as i32;
+            }
+          }}
+         }}
         }}
+       }}
+      }}
+     }}
     }
 
     -1
