@@ -1,18 +1,19 @@
 
 pub fn part1(data:&Vec<String>)->i32
 {
-    data.iter().map(|line|
-        {
-            let cmd  : Vec<&str> = line.split('|').collect();
-            cmd[1].split_whitespace()
-                  .map(|s| s.len())
-                  .filter(|&n| n==2 || n==3 || n==7 || n==4)
-                  .count() as i32
-        }
-    ).sum()
+    data.iter()
+        .map(|line|
+            {
+              let tab : Vec<&str> = line.split('|').collect();
+              tab[1].split_whitespace()
+                    .map(|s| s.len())
+                    .filter(|&n| n==2 || n==4 || n==3 || n==7)
+                    .count() as i32
+            }
+        ).sum()
 }
 
-fn convert(s:&str,pos:&Vec<char>)->String
+fn convert(s:&String,pos:&Vec<char>)->String
 {
     s.chars()
      .map(|c| pos[c as usize - 'a' as usize])
@@ -26,12 +27,11 @@ fn sort_str(s:&str)->String
     chars.into_iter().collect::<String>()    
 }
 
-fn calc(data0:String)->i32
+fn calc(line : String)->i32
 {
-    let line = data0.to_string();
-    let cmd : Vec<&str> = line.split('|').collect();
-    let cmd1 : Vec<_> = cmd[0].split_whitespace().map(|s| sort_str(s).to_owned()).collect();
-    let cmd2 : Vec<_> = cmd[1].split_whitespace().map(|s| sort_str(s).to_owned()).collect();
+    let cmd  : Vec<&str> = line.split('|').collect();
+    let cmd1 : Vec<_>    = cmd[0].split_whitespace().map(|s| sort_str(s).to_owned()).collect();
+    let cmd2 : Vec<_>    = cmd[1].split_whitespace().map(|s| sort_str(s).to_owned()).collect();
  
     //println!("1:{:?}",&cmd1);
     //println!("2:{:?}",&cmd2);
@@ -70,16 +70,14 @@ fn calc(data0:String)->i32
                             if g!=a && g!=b && g!=c && g!=d && g!=e && g!=f
                             {                    
                                 let mut ok=0;
+
                                 for command in cmd1.iter() 
                                 {
-                                    let ss = convert(&command.to_owned(),&[a,b,c,d,e,f,g].to_vec());
+                                    let ss = convert(command,&[a,b,c,d,e,f,g].to_vec());
                                     let so = sort_str(&ss.to_owned());
-                                    if digits.contains(&&so[..]){
-                                        ok+=1;
-                                    }
-                                    else {
-                                        break;
-                                    }
+                                    if !digits.contains(&&so[..]) { break; }
+
+                                    ok+=1;
                                 }
 
                                 if ok==10
@@ -88,7 +86,7 @@ fn calc(data0:String)->i32
 
                                     for i in 0..4 
                                     {
-                                        let s = convert(&cmd2[i].to_owned(),&[a,b,c,d,e,f,g].to_vec());
+                                        let s = convert(&cmd2[i],&[a,b,c,d,e,f,g].to_vec());
                                         let sorted = sort_str(&s[..]);
                                         res[i] = digits.iter().position(|&s| s.to_string()==sorted).unwrap();
                                     }
