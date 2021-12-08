@@ -17,7 +17,7 @@ fn count(data:&Vec<String>,part_two:bool)->i64
     .map(|p|
     {        
         tab.iter()
-           .map(|&x| { sums[i64::abs(x - p) as usize] })
+           .map(|&x| sums[(x - p).abs() as usize] )
            .sum()
     })
     .min()
