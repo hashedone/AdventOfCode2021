@@ -1,31 +1,26 @@
+
 pub fn part1(data:&Vec<String>)->i32
 {
-    let mut count = 0;
-    
-    for line in data {
-        let cmd  : Vec<&str> = line.split('|').collect();
-        let cmd2 : Vec<&str> = cmd[1].split_whitespace().collect();
-
-        count+= cmd2.iter()
-                    .map(|s| s.len())
-                    .filter(|&n| n==2 || n==3 || n==7 || n==4)
-                    .count();
-    }
-
-    count as i32
+    data.iter().map(|line|
+        {
+            let cmd  : Vec<&str> = line.split('|').collect();
+            cmd[1].split_whitespace()
+                  .map(|s| s.len())
+                  .filter(|&n| n==2 || n==3 || n==7 || n==4)
+                  .count() as i32
+        }
+    ).sum()
 }
 
-fn conv(cmd2:&str,pos:&Vec<char>)->String
+fn convert(s:&str,pos:&Vec<char>)->String
 {
-    let mut s = "".to_string();
-    for c in cmd2.chars() 
-    {
-        let d = pos[c as usize - 'a' as usize];
-        s.push(d as char);
-    }
-    s
+    s.chars()
+     .map(|c| pos[c as usize - 'a' as usize])
+     .collect::<String>()
 }
-fn sort_str(s:&str)->String {
+
+fn sort_str(s:&str)->String 
+{
     let mut chars: Vec<char> = s.to_string().chars().collect();
     chars.sort();
     chars.into_iter().collect::<String>()    
@@ -74,13 +69,10 @@ fn calc(data0:String)->i32
                             for g in 'a'..='g' {
                             if g!=a && g!=b && g!=c && g!=d && g!=e && g!=f
                             {                    
-                                let mut res = [0,0,0,0];
-                                let mut cnt = 0;
-
                                 let mut ok=0;
                                 for command in cmd1.iter() 
                                 {
-                                    let ss = conv(&command.to_owned(),&[a,b,c,d,e,f,g].to_vec());
+                                    let ss = convert(&command.to_owned(),&[a,b,c,d,e,f,g].to_vec());
                                     let so = sort_str(&ss.to_owned());
                                     if digits.contains(&&so[..]){
                                         ok+=1;
@@ -92,20 +84,16 @@ fn calc(data0:String)->i32
 
                                 if ok==10
                                 {
+                                    let mut res = [0,0,0,0];
+
                                     for i in 0..4 
                                     {
-                                        let ss = conv(&cmd2[i].to_owned(),&[a,b,c,d,e,f,g].to_vec());
-                                        let sorted = sort_str(&ss[..]);
-
-                                        if digits.contains(&&sorted[..])
-                                        {
-                                            let ii = digits.iter().position(|&s| s.to_string()==sorted).unwrap();
-                                            res[i] = ii as i32;
-                                            cnt+=1;    
-                                        }
+                                        let s = convert(&cmd2[i].to_owned(),&[a,b,c,d,e,f,g].to_vec());
+                                        let sorted = sort_str(&s[..]);
+                                        res[i] = digits.iter().position(|&s| s.to_string()==sorted).unwrap();
                                     }
 
-                                    return res[0]*1000 + res[1]*100 + res[2]*10 + res[3]*1;
+                                    return (res[0]*1000 + res[1]*100 + res[2]*10 + res[3]*1) as i32;
                                 }
                             }}
                         }}
@@ -147,16 +135,16 @@ fn test01()
 fn test2()
 {
     let v = vec![
-        "be cfbegad cbdgef fgaecd cgeb fdcge agebfd fecdb fabcd edb |        fdgacbe cefdb cefbgd gcbe".to_string(),
-        "edbfga begcd cbg gc gcadebf fbgde acbgfd abcde gfcbed gfec |        fcgedb cgb dgebacf gc".to_string(),
-        "fgaebd cg bdaec gdafb agbcfd gdcbef bgcad gfac gcb cdgabef |        cg cg fdcagb cbg".to_string(),
-        "fbegcd cbd adcefb dageb afcb bc aefdc ecdab fgdeca fcdbega |        efabcd cedba gadfec cb".to_string(),
-        "aecbfdg fbg gf bafeg dbefa fcge gcbea fcaegb dgceab fcbdga |        gecf egdcabf bgf bfgea".to_string(),
-        "fgeab ca afcebg bdacfeg cfaedg gcfdb baec bfadeg bafgc acf |        gebdcfa ecba ca fadegcb".to_string(),
-        "dbcfg fgd bdegcaf fgec aegbdf ecdfab fbedc dacgb gdcebf gf |        cefg dcbef fcge gbcadfe".to_string(),
-        "bdfegc cbegaf gecbf dfcage bdacg ed bedf ced adcbefg gebcd |        ed bcgafe cdgba cbgef".to_string(),
-        "egadfb cdbfeg cegd fecab cgb gbdefca cg fgcdab egfdb bfceg |        gbdfcae bgc cg cgb".to_string(),
-        "gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc |        fgae cfgab fg bagce".to_string(),
+        "be cfbegad cbdgef fgaecd cgeb fdcge agebfd fecdb fabcd edb | fdgacbe cefdb cefbgd gcbe".to_string(),
+        "edbfga begcd cbg gc gcadebf fbgde acbgfd abcde gfcbed gfec | fcgedb cgb dgebacf gc".to_string(),
+        "fgaebd cg bdaec gdafb agbcfd gdcbef bgcad gfac gcb cdgabef | cg cg fdcagb cbg".to_string(),
+        "fbegcd cbd adcefb dageb afcb bc aefdc ecdab fgdeca fcdbega | efabcd cedba gadfec cb".to_string(),
+        "aecbfdg fbg gf bafeg dbefa fcge gcbea fcaegb dgceab fcbdga | gecf egdcabf bgf bfgea".to_string(),
+        "fgeab ca afcebg bdacfeg cfaedg gcfdb baec bfadeg bafgc acf | gebdcfa ecba ca fadegcb".to_string(),
+        "dbcfg fgd bdegcaf fgec aegbdf ecdfab fbedc dacgb gdcebf gf | cefg dcbef fcge gbcadfe".to_string(),
+        "bdfegc cbegaf gecbf dfcage bdacg ed bedf ced adcbefg gebcd | ed bcgafe cdgba cbgef".to_string(),
+        "egadfb cdbfeg cegd fecab cgb gbdefca cg fgcdab egfdb bfceg | gbdfcae bgc cg cgb".to_string(),
+        "gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce".to_string(),
     ];
     assert_eq!(part1(&v),26);
 }
@@ -166,16 +154,16 @@ fn test2()
 fn test3()
 {
     let v = vec![
-        "be cfbegad cbdgef fgaecd cgeb fdcge agebfd fecdb fabcd edb |        fdgacbe cefdb cefbgd gcbe".to_string(),
-        "edbfga begcd cbg gc gcadebf fbgde acbgfd abcde gfcbed gfec |        fcgedb cgb dgebacf gc".to_string(),
-        "fgaebd cg bdaec gdafb agbcfd gdcbef bgcad gfac gcb cdgabef |        cg cg fdcagb cbg".to_string(),
-        "fbegcd cbd adcefb dageb afcb bc aefdc ecdab fgdeca fcdbega |        efabcd cedba gadfec cb".to_string(),
-        "aecbfdg fbg gf bafeg dbefa fcge gcbea fcaegb dgceab fcbdga |        gecf egdcabf bgf bfgea".to_string(),
-        "fgeab ca afcebg bdacfeg cfaedg gcfdb baec bfadeg bafgc acf |        gebdcfa ecba ca fadegcb".to_string(),
-        "dbcfg fgd bdegcaf fgec aegbdf ecdfab fbedc dacgb gdcebf gf |        cefg dcbef fcge gbcadfe".to_string(),
-        "bdfegc cbegaf gecbf dfcage bdacg ed bedf ced adcbefg gebcd |        ed bcgafe cdgba cbgef".to_string(),
-        "egadfb cdbfeg cegd fecab cgb gbdefca cg fgcdab egfdb bfceg |        gbdfcae bgc cg cgb".to_string(),
-        "gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc |        fgae cfgab fg bagce        ".to_string(),
+        "be cfbegad cbdgef fgaecd cgeb fdcge agebfd fecdb fabcd edb | fdgacbe cefdb cefbgd gcbe".to_string(),
+        "edbfga begcd cbg gc gcadebf fbgde acbgfd abcde gfcbed gfec | fcgedb cgb dgebacf gc".to_string(),
+        "fgaebd cg bdaec gdafb agbcfd gdcbef bgcad gfac gcb cdgabef | cg cg fdcagb cbg".to_string(),
+        "fbegcd cbd adcefb dageb afcb bc aefdc ecdab fgdeca fcdbega | efabcd cedba gadfec cb".to_string(),
+        "aecbfdg fbg gf bafeg dbefa fcge gcbea fcaegb dgceab fcbdga | gecf egdcabf bgf bfgea".to_string(),
+        "fgeab ca afcebg bdacfeg cfaedg gcfdb baec bfadeg bafgc acf | gebdcfa ecba ca fadegcb".to_string(),
+        "dbcfg fgd bdegcaf fgec aegbdf ecdfab fbedc dacgb gdcebf gf | cefg dcbef fcge gbcadfe".to_string(),
+        "bdfegc cbegaf gecbf dfcage bdacg ed bedf ced adcbefg gebcd | ed bcgafe cdgba cbgef".to_string(),
+        "egadfb cdbfeg cegd fecab cgb gbdefca cg fgcdab egfdb bfceg | gbdfcae bgc cg cgb".to_string(),
+        "gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce".to_string(),
     ];
     assert_eq!(part2(&v),61229);
 }
