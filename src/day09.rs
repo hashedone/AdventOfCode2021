@@ -2,7 +2,7 @@ fn get_point(field:&Vec<Vec<i32>>,x:i32,y:i32)->i32
 {
     if x<0 || y<0 { return 9; }
     if x>=field[0].len() as i32 || y>=field.len() as i32 { return 9; }
-
+    
     field[y as usize][x as usize]
 }
 
@@ -33,7 +33,7 @@ fn calc(data:&Vec<String>)->Vec<(i32,i32)>
         if  get_point(&field,x-1,y  )>v &&
             get_point(&field,x+1,y  )>v &&
             get_point(&field,x  ,y-1)>v &&
-            get_point(&field,x  ,y+1)>v  { res.push((x as i32,y as i32)); }
+            get_point(&field,x  ,y+1)>v { res.push((x as i32,y as i32)); }
     }
     }    
 
