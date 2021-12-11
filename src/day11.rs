@@ -5,70 +5,60 @@ pub fn calc(data:&Vec<String>,steps:i32,part_two:bool)->i32
     let dx = data[0].len();
     let dy = data.len();
 
-    let mut f : HashMap<(i32,i32),u32> = HashMap::new();
+    let mut fields : HashMap<(i32,i32),u32> = HashMap::new();
 
     for y in 0..dy {
-        for x in 0..dx {
-            f.insert((x as i32,y as i32),
-                     data[y as usize].chars().nth(x as usize).unwrap().to_digit(10).unwrap() );
-        }
+    for x in 0..dx {
+        fields.insert((x as i32,y as i32),
+                      data[y as usize].chars().nth(x as usize).unwrap().to_digit(10).unwrap() );
     }
+    }
+
+    let keys = fields.keys()
+                     .map(|(x,y)| (*x,*y))
+                     .collect::<Vec<(i32,i32)>>();
     
     let mut res = 0;
 
-    for step in 1..=steps {
-        let mut flash = true;
-        let mut flushed = HashSet::new();
+    for step in 1..=steps 
+    {
+        for v in fields.iter_mut() { *v.1+=1; }
 
-        for y in 0..dy {
-            for x in 0..dx {
-                let p = (x as i32,y as i32);
-                let v = *f.get(&p).unwrap_or(&0);
-                f.insert(p, v+1);
-            }
-        }
-
+        let mut flashed = HashSet::new();
+        let mut flash   = true;
+        
         while flash 
         {
             flash = false;
 
-            for y in 0..dy {
-                for x in 0..dx {
-                    let p = (x as i32,y as i32);
-                    let v = *f.get(&p).unwrap_or(&0);
+            for p in &keys
+            {
+                if *fields.get(&p).unwrap()>9 && !flashed.contains(&p)
+                {
+                    flashed.insert(p);
+                    res+=1;
+                    flash = true;
 
-                    if v>9
+                    for yy in -1..=1 {
+                    for xx in -1..=1 {
+                    if xx!=0 || yy!=0
                     {
-                        if !flushed.contains(&p)
-                        {
-                            flushed.insert(p);
-                            res+=1;
-                            flash = true;
-
-                            for yy in -1..=1 {
-                            for xx in -1..=1 {    
-                            if xx!=0 || yy!=0                    
-                            {
-                                let pn = (x as i32 + xx,y as i32 + yy);
-                                let nv = *f.get(&pn).unwrap_or(&0) + 1;
-                                f.insert(pn, nv );                
-                            }
-                            }
-                            }
-                        }
+                        let pn = (p.0 + xx,p.1 + yy);
+                        fields.insert(pn,fields.get(&pn).unwrap_or(&0) + 1);
                     }
-                }   
+                    }
+                    }
+                }
             }
         }
 
-        if part_two && flushed.len()==dx*dy { return step;}
+        if part_two && flashed.len()==dx*dy { return step; }
 
-        for y in 0..dy {
-        for x in 0..dx {
-            let p = (x as i32,y as i32);
-            let v = *f.get(&p).unwrap();
-            f.insert(p,if flushed.contains(&p) {0} else {v%10} );
-        }}
+        for p in &keys
+        {
+            let vn = if flashed.contains(p) { 0 } else { fields.get(&p).unwrap()%10 };
+            fields.insert(*p, vn);
+        }
     }
 
     res
