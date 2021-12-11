@@ -10,7 +10,7 @@ pub fn calc(data:&Vec<String>,steps:i32,part_two:bool)->i32
     for y in 0..dy {
     for x in 0..dx {
         fields.insert((x as i32,y as i32),
-                      data[y as usize].chars().nth(x as usize).unwrap().to_digit(10).unwrap() );
+                      data[y].chars().nth(x).unwrap().to_digit(10).unwrap() );
     }
     }
 
@@ -22,7 +22,7 @@ pub fn calc(data:&Vec<String>,steps:i32,part_two:bool)->i32
 
     for step in 1..=steps 
     {
-        for v in fields.iter_mut() { *v.1+=1; }
+        for (_,val) in fields.iter_mut() { *val+=1; }
 
         let mut flashed = HashSet::new();
         let mut flash   = true;
@@ -56,8 +56,7 @@ pub fn calc(data:&Vec<String>,steps:i32,part_two:bool)->i32
 
         for p in &keys
         {
-            let vn = if flashed.contains(p) { 0 } else { fields.get(&p).unwrap()%10 };
-            fields.insert(*p, vn);
+            *fields.get_mut(p).unwrap() = if flashed.contains(p) { 0 } else { fields.get(&p).unwrap()%10 };
         }
     }
 
