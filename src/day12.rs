@@ -1,56 +1,63 @@
 use std::collections::{HashMap,HashSet};
 
-//part1:4691
-//part2:140718
-//Elapsed: 1.6700001 
-//Elapsed: 1.59
-
-fn count(lim:i32,path:String,c:&HashMap<String,Vec<String>>,p:String,vis:&mut HashMap<String,i32>,all_paths:&mut HashSet<String>)->i32
-{
-    let pathn = format!("{},{}",path,p);
-    
-    if p=="end" 
+fn count<'a>(    limit : i32,
+                  path : String,
+                  conn : &'a  HashMap<String,Vec<String>>,
+                  cave : String,
+               visited : &mut HashMap<&'a str,i32>,
+             all_paths : &mut HashSet<String>)
+{  
+    if cave=="end" 
     {
         all_paths.insert(path);
-        return 1;
+        return;
     }
 
-    let points = c.get(&p).unwrap();
+    let new_path = format!("{},{}",path,cave);
 
-    for p in points.iter()
+    for p in conn.get(&cave).unwrap().iter()
     {
-        let lower = p.chars().nth(0).unwrap().is_lowercase();
-        let visited = *vis.get(p).unwrap_or(&0);
+        let is_lower       = p.chars().nth(0).unwrap().is_lowercase();
+        let &visited_count = visited.get(&p[..]).unwrap_or(&0);
          
-        if !(lower && visited>=lim)
+        if !(is_lower && visited_count>=limit)
         {
-            vis.insert(p.clone(),visited+1);
-            count(if lower && visited+1==2 { 1 } else { lim },pathn.clone(), &c, p.clone(), vis, all_paths);
-            vis.insert(p.clone(),visited);
+            visited.insert(&p[..],visited_count+1);
+
+            let new_limit = if is_lower && visited_count+1==2 {     1 } 
+                                                         else { limit };
+
+            count(new_limit, new_path.clone(), conn, p.clone(), visited, all_paths);
+
+            visited.insert(&p[..],visited_count);
         }    
     }
-    0
 }
+//Day12
+//part1:4691
+//part2:140718
+//Elapsed: 0.33400002 secs
 
 fn solution(data:&Vec<String>,limit:i32)->i32
 {
-    let mut  all_paths : HashSet<String> = HashSet::new();
-    let mut  vis : HashMap<String,i32> = HashMap::new();
-    let mut conn : HashMap<String,Vec<String>> = HashMap::new();
+    let mut  all_paths : HashSet<String>             = HashSet::new();
+    let mut    visited : HashMap<&str,i32>           = HashMap::new();
+    let mut       conn : HashMap<String,Vec<String>> = HashMap::new();
     
-    for line in data {
+    for line in data 
+    {
         let con = line.split('-')
-                                 .map(|s| s.to_string())
-                                 .collect::<Vec<String>>();
+                      .map(|s| s.to_string())
+                      .collect::<Vec<String>>();
 
         conn.entry(con[0].clone()).or_insert(Vec::new()).push(con[1].clone());
         conn.entry(con[1].clone()).or_insert(Vec::new()).push(con[0].clone());
     }
 
-    let p = "start".to_string();
-    vis.insert("start".to_string(),2);
+    let cave = "start".to_string();
+    visited.insert(&cave,2);
     
-    count(limit,"".to_string(), &conn, p.to_string(), &mut vis,&mut all_paths);
+    count(limit,"".to_string(), &conn, cave.clone(), &mut visited,&mut all_paths);
     all_paths.len() as i32
 }
 
@@ -73,7 +80,7 @@ pub fn solve(data:&Vec<String>)
 }
 
 #[test]
-fn test0()
+fn test1_0()
 {
     let v = vec![
         "start-A".to_string(),
@@ -88,7 +95,7 @@ fn test0()
 }
     
 #[test]
-fn test1()
+fn test1_1()
 {
     let v = vec![
         "dc-end".to_string(),
@@ -106,7 +113,7 @@ fn test1()
 }
 
 #[test]
-fn test2()
+fn test1_2()
 {
     let v = vec![
         "fs-end".to_string(),
