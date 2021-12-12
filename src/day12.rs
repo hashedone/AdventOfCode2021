@@ -1,12 +1,17 @@
 use std::collections::{HashMap,HashSet};
 
-fn count(lim:i32,path:String,c:&HashMap<String,Vec<String>>,p:String,vis:&mut HashMap<String,i32>,all:&mut HashSet<String>)->i32
+//part1:4691
+//part2:140718
+//Elapsed: 1.6700001 
+//Elapsed: 1.59
+
+fn count(lim:i32,path:String,c:&HashMap<String,Vec<String>>,p:String,vis:&mut HashMap<String,i32>,all_paths:&mut HashSet<String>)->i32
 {
-    let pathn = format!("{}-{}",path , p);
+    let pathn = format!("{},{}",path,p);
     
     if p=="end" 
     {
-        all.insert(path);
+        all_paths.insert(path);
         return 1;
     }
 
@@ -14,23 +19,14 @@ fn count(lim:i32,path:String,c:&HashMap<String,Vec<String>>,p:String,vis:&mut Ha
 
     for p in points.iter()
     {
-        let pp = p.clone();
         let lower = p.chars().nth(0).unwrap().is_lowercase();
-        let ll = *vis.get(&pp).unwrap_or(&0);
+        let visited = *vis.get(p).unwrap_or(&0);
          
-        if !(lower && (ll>=lim)) && pp!="start"
+        if !(lower && visited>=lim)
         {
-            vis.insert(pp.clone(),ll+1);
-
-            let mut lln = lim;
-            
-            if lower && ll+1==2 
-            {
-                lln=1;
-            }
-
-            count(lln,pathn.clone(), &c, p.clone(), vis, all);
-            vis.insert(pp.clone(),ll);
+            vis.insert(p.clone(),visited+1);
+            count(if lower && visited+1==2 { 1 } else { lim },pathn.clone(), &c, p.clone(), vis, all_paths);
+            vis.insert(p.clone(),visited);
         }    
     }
     0
@@ -38,38 +34,24 @@ fn count(lim:i32,path:String,c:&HashMap<String,Vec<String>>,p:String,vis:&mut Ha
 
 fn solution(data:&Vec<String>,limit:i32)->i32
 {
-    let mut vis:HashMap<String,i32> = HashMap::new();
-    let mut all: HashSet<String> = HashSet::new();
-    let mut conn:HashMap<String,Vec<String>> = HashMap::new();
+    let mut  all_paths : HashSet<String> = HashSet::new();
+    let mut  vis : HashMap<String,i32> = HashMap::new();
+    let mut conn : HashMap<String,Vec<String>> = HashMap::new();
     
     for line in data {
-        let con = line.split('-').map(|s| s.to_string())
-        .collect::<Vec<String>>();
+        let con = line.split('-')
+                                 .map(|s| s.to_string())
+                                 .collect::<Vec<String>>();
 
-        if !conn.contains_key(&con[0])
-        {
-            conn.insert(con[0].to_string(), vec![con[1].to_string()]);
-        }
-        else
-        {
-            conn.get_mut(&con[0]).unwrap().push(con[1].to_string());
-        }
-
-        if !conn.contains_key(&con[1])
-        {
-            conn.insert(con[1].to_string(), vec![con[0].to_string()]);
-        }
-        else
-        {
-            conn.get_mut(&con[1]).unwrap().push(con[0].to_string());
-        }
+        conn.entry(con[0].clone()).or_insert(Vec::new()).push(con[1].clone());
+        conn.entry(con[1].clone()).or_insert(Vec::new()).push(con[0].clone());
     }
 
     let p = "start".to_string();
-    vis.insert("start".to_string(),1);
+    vis.insert("start".to_string(),2);
     
-    count(limit,"".to_string(), &conn, p.to_string(), &mut vis,&mut all);
-    all.len() as i32
+    count(limit,"".to_string(), &conn, p.to_string(), &mut vis,&mut all_paths);
+    all_paths.len() as i32
 }
 
 pub fn part1(data:&Vec<String>)->i32
