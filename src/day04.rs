@@ -29,7 +29,7 @@ impl Board
     {
         for (y,l) in s.iter().enumerate() 
         {
-            let num = get_numbers(&l);
+            let num = get_numbers(l);
             for (id,&v) in num.iter().enumerate() 
             {
                 self.tab[y][id] = v;
@@ -65,14 +65,14 @@ impl Board
     }
 }
 
-fn get_numbers(s:&String)->Vec<i32>
+fn get_numbers(s:&str)->Vec<i32>
 {
     s.split_whitespace()
      .map(|s| s.parse::<i32>().unwrap())
      .collect::<Vec<i32>>()
 }
 
-fn prepare_data(data:&Vec<String>)->(Vec<i32>,Vec<Board>)
+fn prepare_data(data:&[String])->(Vec<i32>,Vec<Board>)
 {
     let        num = get_numbers(&data[0].replace(','," "));
     let mut boards = vec![];
@@ -84,7 +84,7 @@ fn prepare_data(data:&Vec<String>)->(Vec<i32>,Vec<Board>)
     (num,boards)
 }
 
-pub fn part1(data:&Vec<String>)->i32
+pub fn part1(data:&[String])->i32
 {
     let (num,mut boards) = prepare_data(data);
 
@@ -98,7 +98,7 @@ pub fn part1(data:&Vec<String>)->i32
     0
 }
 
-pub fn part2(data:&Vec<String>)->i32
+pub fn part2(data:&[String])->i32
 {
     let (num,mut boards) = prepare_data(data);
 
@@ -120,7 +120,7 @@ pub fn part2(data:&Vec<String>)->i32
 }
 
 #[allow(unused)]
-pub fn solve(data:&Vec<String>)
+pub fn solve(data:&[String])
 {    
     println!("Day4");
     println!("part1:{}",part1(data));

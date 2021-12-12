@@ -1,4 +1,4 @@
-fn count(data:&Vec<String>,part_two:bool)->i64
+fn count(data:&[String],part_two:bool)->i64
 {
     let tab : Vec<i64> = data[0].split(',')
                                 .map(|d| d.parse().unwrap())
@@ -24,18 +24,18 @@ fn count(data:&Vec<String>,part_two:bool)->i64
     .unwrap()
 }
 
-pub fn part1(data:&Vec<String>)->i64
+pub fn part1(data:&[String])->i64
 {
     count(data,false)
 }
 
-pub fn part2(data:&Vec<String>)->i64
+pub fn part2(data:&[String])->i64
 {
     count(data,true)
 }
 
 #[allow(unused)]
-pub fn solve(data:&Vec<String>)
+pub fn solve(data:&[String])
 {    
     println!("Day7");
     println!("part1:{}",part1(data));

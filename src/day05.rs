@@ -1,12 +1,12 @@
 use std::collections::{HashMap};
 
-fn get_point(s:&String)->(i32,i32)
+fn get_point(s:&str)->(i32,i32)
 {
     let p : Vec<_>= s.split(',').collect();
     (p[0].parse::<i32>().unwrap() , p[1].parse::<i32>().unwrap())
 }
 
-fn draw(data:&Vec<String>,diagonal:bool)->i32
+fn draw(data:&[String],diagonal:bool)->i32
 {
     let mut field: HashMap<(i32,i32),i32> = HashMap::new();
 
@@ -34,18 +34,18 @@ fn draw(data:&Vec<String>,diagonal:bool)->i32
          .count() as i32
 }
 
-pub fn part1(data:&Vec<String>)->i32
+pub fn part1(data:&[String])->i32
 {
     draw(data,false)
 }
 
-pub fn part2(data:&Vec<String>)->i32
+pub fn part2(data:&[String])->i32
 {
     draw(data,true)
 }
 
 #[allow(unused)]
-pub fn solve(data:&Vec<String>)
+pub fn solve(data:&[String])
 {    
     println!("Day5");
     println!("part1:{}",part1(data));

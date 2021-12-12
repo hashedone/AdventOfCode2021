@@ -1,4 +1,4 @@
-fn compute(line:&String)->(i32,Vec<char>)
+fn compute(line:&str)->(i32,Vec<char>)
 {
     let mut stack = vec![];
 
@@ -31,14 +31,14 @@ fn compute(line:&String)->(i32,Vec<char>)
     (0,stack)
 }
 
-pub fn part1(data:&Vec<String>)->i32
+pub fn part1(data:&[String])->i32
 {
     data.iter()
         .map(|l| compute(l).0)
         .sum()
 }
 
-fn score(c:&Vec<char>)->i64
+fn score(c:&[char])->i64
 {
     c.iter()
      .fold(0, |acc,&x|
@@ -52,7 +52,7 @@ fn score(c:&Vec<char>)->i64
      )
 }
 
-pub fn part2(data:&Vec<String>)->i64
+pub fn part2(data:&[String])->i64
 {
     let mut tab = data.iter()
                       .filter_map(|l|
@@ -63,12 +63,12 @@ pub fn part2(data:&Vec<String>)->i64
                       })
                       .collect::<Vec<i64>>();
                     
-    tab.sort();
+    tab.sort_unstable();
     tab[tab.len()/2]
 }
 
 #[allow(unused)]
-pub fn solve(data:&Vec<String>)
+pub fn solve(data:&[String])
 {    
     println!("Day10");
     println!("part1:{}",part1(data));

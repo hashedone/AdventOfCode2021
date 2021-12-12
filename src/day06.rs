@@ -1,4 +1,4 @@
-fn count(data:&Vec<String>,iterations:i32)->i64
+fn count(data:&[String],iterations:i32)->i64
 {
     let mut tab : Vec<(i32,usize)> = data[0].split(',')
                                             .map(|d| (d.parse().unwrap(),1) )
@@ -23,7 +23,7 @@ fn count(data:&Vec<String>,iterations:i32)->i64
 }
 
 #[allow(unused)]
-pub fn solve(data:&Vec<String>)
+pub fn solve(data:&[String])
 {    
     println!("Day6");
     println!("part1:{}",count(data, 80));

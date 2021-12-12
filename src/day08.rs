@@ -1,6 +1,6 @@
 use std::collections::{HashMap};
 
-pub fn part1(data:&Vec<String>)->i32
+pub fn part1(data:&[String])->i32
 {
     data.iter()
         .map(|line|
@@ -15,7 +15,7 @@ pub fn part1(data:&Vec<String>)->i32
         ).sum()
 }
 
-fn convert(s:&String,pos:&Vec<char>)->String
+fn convert(s:&str,pos:&[char])->String
 {
     s.chars()
      .map(|c| pos[c as usize - 'a' as usize])
@@ -25,15 +25,15 @@ fn convert(s:&String,pos:&Vec<char>)->String
 fn sort_str(s:&str)->String 
 {
     let mut chars: Vec<char> = s.to_string().chars().collect();
-    chars.sort();
+    chars.sort_unstable();
     chars.into_iter().collect::<String>()    
 }
 
 fn calc(line : String)->i32
 {
     let cmd  : Vec<&str> = line.split('|').collect();
-    let cmd1 : Vec<_>    = cmd[0].split_whitespace().map(|s| sort_str(s).to_owned()).collect();
-    let cmd2 : Vec<_>    = cmd[1].split_whitespace().map(|s| sort_str(s).to_owned()).collect();
+    let cmd1 : Vec<_>    = cmd[0].split_whitespace().map(|s| sort_str(s)).collect();
+    let cmd2 : Vec<_>    = cmd[1].split_whitespace().map(|s| sort_str(s)).collect();
 
     let digits : HashMap<&str,i32> = 
     [    
@@ -80,7 +80,7 @@ fn calc(line : String)->i32
                     res[i]     = *digits.get(&&sorted[..]).unwrap();
                 }
 
-                return (res[0]*1000 + res[1]*100 + res[2]*10 + res[3]*1) as i32;
+                return (res[0]*1000 + res[1]*100 + res[2]*10 + res[3]) as i32;
             }
           }}
          }}
@@ -93,7 +93,7 @@ fn calc(line : String)->i32
     -1
 }
 
-pub fn part2(data:&Vec<String>)->i32
+pub fn part2(data:&[String])->i32
 {
     data.iter()
         .map(|d| calc(d.clone()))
@@ -101,7 +101,7 @@ pub fn part2(data:&Vec<String>)->i32
 }
 
 #[allow(unused)]
-pub fn solve(data:&Vec<String>)
+pub fn solve(data:&[String])
 {    
     println!("Day8");
     println!("part1:{}",part1(data));

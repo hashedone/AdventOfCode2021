@@ -1,4 +1,4 @@
-pub fn part1(data:&Vec<String>)->i32
+pub fn part1(data:&[String])->i32
 {
     let mut pos = 0;
     let mut depth = 0;
@@ -18,7 +18,7 @@ pub fn part1(data:&Vec<String>)->i32
     pos*depth
 }
 
-pub fn part2(data:&Vec<String>)->i32
+pub fn part2(data:&[String])->i32
 {
     let mut pos = 0;
     let mut depth = 0;
@@ -41,7 +41,7 @@ pub fn part2(data:&Vec<String>)->i32
 }
 
 #[allow(unused)]
-pub fn solve(data:&Vec<String>)
+pub fn solve(data:&[String])
 {    
     println!("Day2");
     println!("part1:{}",part1(data));

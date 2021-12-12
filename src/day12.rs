@@ -2,7 +2,7 @@ use std::collections::{HashMap,HashSet};
 
 fn count<'a>(    limit : i32,
            connections : &'a  HashMap<String,Vec<String>>,
-                  cave : String,
+                  cave : &str,
                   path : &mut Vec<String>,                  
                visited : &mut HashMap<&'a str,i32>,
              all_paths : &mut HashSet<String>)
@@ -13,11 +13,11 @@ fn count<'a>(    limit : i32,
         return;
     }
 
-    path.push(cave.clone());
+    path.push(cave.to_string());
 
-    for point in connections.get(&cave).unwrap().iter()
+    for point in connections.get(cave).unwrap().iter()
     {
-        let is_lower       = point.chars().nth(0).unwrap().is_lowercase();
+        let is_lower       = point.chars().next().unwrap().is_lowercase();
         let &visited_count = visited.get(&point[..]).unwrap_or(&0);
          
         if !(is_lower && visited_count>=limit)
@@ -27,7 +27,7 @@ fn count<'a>(    limit : i32,
             let new_limit = if is_lower && visited_count+1==2 {     1 } 
                                                          else { limit };
 
-            count(new_limit, connections, point.clone(), path, visited, all_paths);
+            count(new_limit, connections, point, path, visited, all_paths);
 
             visited.insert(&point[..],visited_count);
         }    
@@ -36,12 +36,12 @@ fn count<'a>(    limit : i32,
     path.pop();
 }
 
-fn solution(data:&Vec<String>,limit:i32)->i32
+fn solution(data:&[String],limit:i32)->usize
 {
     let mut   all_paths : HashSet<String>             = HashSet::new();
-    let mut     visited : HashMap<&str,i32>           = HashMap::new();
+    let mut     visited : HashMap<&str  ,i32>         = HashMap::new();
     let mut connections : HashMap<String,Vec<String>> = HashMap::new();
-    let mut        path : Vec<String>                 = vec![];
+    let mut        path : Vec<String>                 =     Vec::new();
     
     for line in data 
     {
@@ -49,29 +49,29 @@ fn solution(data:&Vec<String>,limit:i32)->i32
                       .map(|s| s.to_string())
                       .collect::<Vec<String>>();
 
-        connections.entry(con[0].clone()).or_insert(Vec::new()).push(con[1].clone());
-        connections.entry(con[1].clone()).or_insert(Vec::new()).push(con[0].clone());
+        connections.entry(con[0].clone()).or_insert_with(Vec::new).push(con[1].clone());
+        connections.entry(con[1].clone()).or_insert_with(Vec::new).push(con[0].clone());
     }
 
     let cave = "start".to_string();
     visited.insert(&cave,2);
     
-    count(limit, &connections, cave.clone(), &mut path, &mut visited, &mut all_paths);
-    all_paths.len() as i32
+    count(limit, &connections, &cave, &mut path, &mut visited, &mut all_paths);
+    all_paths.len()
 }
 
-pub fn part1(data:&Vec<String>)->i32
+pub fn part1(data:&[String])->usize
 {
     solution(data,1)
 }
 
-pub fn part2(data:&Vec<String>)->i32
+pub fn part2(data:&[String])->usize
 {
     solution(data,2)
 }
 
 #[allow(unused)]
-pub fn solve(data:&Vec<String>)
+pub fn solve(data:&[String])
 {    
     println!("Day12");
     println!("part1:{}",part1(data));

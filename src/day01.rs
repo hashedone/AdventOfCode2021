@@ -1,4 +1,4 @@
-pub fn part1(data:&Vec<i32>)->i32
+pub fn part1(data:&[i32])->i32
 {
     data.iter()
         .fold((0,i32::MAX), |(acc,prev), &x| 
@@ -7,21 +7,21 @@ pub fn part1(data:&Vec<i32>)->i32
         .0
 }
 
-pub fn part2(data:&Vec<i32>)->i32
+pub fn part2(data:&[i32])->i32
 {
     let mut cnt=0;
 
     for i in 0..data.len()-3
     {
-        if data[i+1..i+3+1].into_iter().sum::<i32>()>
-           data[i  ..i+3  ].into_iter().sum::<i32>() { cnt+=1 }
+        if data[i+1..i+3+1].iter().sum::<i32>()>
+           data[i  ..i+3  ].iter().sum::<i32>() { cnt+=1 }
     }
 
     cnt
 }
 
 #[allow(unused)]
-pub fn solve(data:&Vec<i32>)
+pub fn solve(data:&[i32])
 {    
     println!("Day1");
     println!("part1:{}",part1(data));

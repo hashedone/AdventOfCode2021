@@ -1,16 +1,15 @@
 use std::collections::{HashMap,HashSet};
 
-pub fn calc(data:&Vec<String>,steps:i32,part_two:bool)->i32
+pub fn calc(data:&[String],steps:i32,part_two:bool)->i32
 {
     let dx = data[0].len();
     let dy = data.len();
 
     let mut fields : HashMap<(i32,i32),u32> = HashMap::new();
 
-    for y in 0..dy {
-    for x in 0..dx {
-        fields.insert((x as i32,y as i32),
-                      data[y].chars().nth(x).unwrap().to_digit(10).unwrap() );
+    for (y, line) in data.iter().enumerate() {
+    for (x, c)      in line.chars().enumerate() {
+        fields.insert((x as i32,y as i32),c.to_digit(10).unwrap() );
     }
     }
 
@@ -33,7 +32,7 @@ pub fn calc(data:&Vec<String>,steps:i32,part_two:bool)->i32
 
             for p in &keys
             {
-                if *fields.get(&p).unwrap()>9 && !flashed.contains(&p)
+                if *fields.get(p).unwrap()>9 && !flashed.contains(&p)
                 {
                     flashed.insert(p);
                     res+=1;
@@ -56,25 +55,25 @@ pub fn calc(data:&Vec<String>,steps:i32,part_two:bool)->i32
 
         for p in &keys
         {
-            *fields.get_mut(p).unwrap() = if flashed.contains(p) { 0 } else { fields.get(&p).unwrap()%10 };
+            *fields.get_mut(p).unwrap() = if flashed.contains(p) { 0 } else { fields.get(p).unwrap()%10 };
         }
     }
 
     res
 }
 
-pub fn part1(data:&Vec<String>,steps:i32)->i32
+pub fn part1(data:&[String],steps:i32)->i32
 {  
     calc(data,steps,false)
 }
 
-pub fn part2(data:&Vec<String>)->i32
+pub fn part2(data:&[String])->i32
 {
     calc(data,i32::MAX,true)
 }
 
 #[allow(unused)]
-pub fn solve(data:&Vec<String>)
+pub fn solve(data:&[String])
 {    
     println!("Day11");
     println!("part1:{}",part1(data,100));
