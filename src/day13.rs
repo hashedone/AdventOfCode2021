@@ -2,70 +2,52 @@ use std::collections::{HashSet};
 
 fn fold(horiz:bool,val:i32,f:&mut HashSet<(i32,i32)>)
 {
-    if !horiz { //y=
-        let yy = val;
-
+    if !horiz {
         for (x,y) in f.clone().iter() {
-            if *y>yy {
-                let np = (*x,yy - (y-yy));
-                f.insert(np);
-            }
-        }
-
-        for (x,y) in f.clone().iter() {
-            if *y>=yy { f.remove(&(*x,*y)); }
+            if *y >val { f.insert( (*x,val - (y-val))); }
+            if *y>=val { f.remove(&(*x,           *y)); }
         }
     }
-    else {
-        let xx =val;
-
+      else 
+    {
         for (x,y) in f.clone().iter() {
-            if *x>xx {
-                let np = (xx - (x-xx),*y);
-                f.insert(np);
-            }
+            if *x> val { f.insert( (val - (x-val),*y)); }
+            if *x>=val { f.remove(&(           *x,*y)); }
         }
-
-        for (x,y) in f.clone().iter() {
-            if *x>=xx {
-                f.remove(&(*x,*y));
-            }
-        }
-        
     }
-   
 }
 
-pub fn part1(data:&[String])->i32
+fn parse(data:&[String],field:&mut HashSet<(i32,i32)>,folds:&mut Vec<(bool,i32)>)
 {
-    let mut f : HashSet<(i32,i32)> = HashSet::new();
-    let mut v : Vec<(bool,i32)>    = Vec::new();
-
     for line in data 
     {
         if line.contains("fold along ")
         {
             let pos : Vec<&str> = line.split("fold along ").collect();    
-            let fol : Vec<&str> = pos[1].split("=").collect();
+            let fol : Vec<&str> = pos[1].split('=').collect();
             
-            v.push((fol[0]=="x",fol[1].parse().unwrap()));
+            folds.push((fol[0]=="x",fol[1].parse().unwrap()));
         }
-        else if line.len()>0 
+        else if !line.is_empty()
         {
-            let pos : Vec<&str> = line.split(',').collect();    
-            let xx = pos[0].parse().unwrap();
-            let yy = pos[1].parse().unwrap();
-            f.insert((xx,yy));
+            let pos = line.split(',').collect::<Vec<&str>>();    
+            let xx  = pos[0].parse().unwrap();
+            let yy  = pos[1].parse().unwrap();
+
+            field.insert((xx,yy));
         }
     }
+}
 
+pub fn part1(data:&[String])->usize
+{
+    let mut f : HashSet<(i32,i32)> = HashSet::new();
+    let mut v : Vec<(bool,i32)>    = Vec::new();
+
+    parse(data,&mut f,&mut v);
     fold(v[0].0,v[0].1,&mut f);
-
-    println!("{:?}",v);
-    println!("{:?}",f);
-
  
-    f.len() as i32
+    f.len()
 }
 
 pub fn part2(data:&[String])
@@ -73,44 +55,21 @@ pub fn part2(data:&[String])
     let mut f : HashSet<(i32,i32)> = HashSet::new();
     let mut v : Vec<(bool,i32)>    = Vec::new();
 
-    for line in data 
-    {
-        if line.contains("fold along ")
-        {
-            let pos : Vec<&str> = line.split("fold along ").collect();    
-            let fol : Vec<&str> = pos[1].split("=").collect();
-            
-            //println!("fol=[{:?}]",line);
-            //println!("fol=[{:?}]",fol);/
+    parse(data,&mut f,&mut v);
 
-            if fol[0]=="x"
-            {
-                v.push((true ,fol[1].parse().unwrap()));
-            }
-            else if fol[0]=="y"
-            {
-                v.push((false,fol[1].parse().unwrap()));
-            }
-        }
-        else if line.len()>0 
-        {
-            let pos : Vec<&str> = line.split(',').collect();    
-            let xx = pos[0].parse().unwrap();
-            let yy = pos[1].parse().unwrap();
-            f.insert((xx,yy));
-        }
+    for (horizontal,point) in v {
+        fold(horizontal,point,&mut f);
     }
 
-        for cmd in v {
-            fold(cmd.0,cmd.1,&mut f);
-        }
+    let (xm,ym) = (f.iter().map(|(x,_)| *x ).max().unwrap(),
+                   f.iter().map(|(_,y)| *y ).max().unwrap());
 
-        for y in 0..10 {
-        for x in 0..40 {
-                print!("{}", if f.contains(&(x,y)) {'█'} else {' '} );
-            }
-            println!("");
+    for y in 0..=ym {
+    for x in 0..=xm {
+            print!("{}", if f.contains(&(x,y)) {'█'} else {' '} );
         }
+        println!();
+    }
 }
 
 
