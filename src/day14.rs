@@ -1,13 +1,8 @@
-use std::collections::{HashMap};
+use std::{collections::{HashMap}, vec};
 
-fn get_codes(codes:&HashMap<String,char>,a:char,b:char)->char
+fn get_codes(codes:&HashMap<(char,char),char>,a:char,b:char)->char
 {
-    let cc:String = [a.to_string(),b.to_string()].join("") as String;
-        
-    if codes.contains_key(&cc) {
-        return codes[&cc]
-    }
-    ' '
+    *codes.get(&(a,b)).unwrap_or(&' ')
 }
 
 fn compact(t:&Vec<(char,i64)>)->Vec<(char,i64)>
@@ -38,9 +33,10 @@ fn compact(t:&Vec<(char,i64)>)->Vec<(char,i64)>
 //N(2)C(1)B(1)
 //N(1)C(1)N(1)B(1)C(1)H(1)B(1)
 
-fn get_v(res:&mut Vec<(char,i64)>,codes:&HashMap<String,char>,a:(char,i64),b:(char,i64))
+fn get_v(res:&mut Vec<(char,i64)>,codes:&HashMap<(char,char),char>,a:(char,i64),b:(char,i64))
 { 
     let aa = get_codes(codes,a.0,a.0);
+
     if a.1>1 && aa!=' '
     {
         for _ in 0..a.1-1 {
@@ -83,30 +79,50 @@ fn printc(vect:&Vec<(char,i64)>)
     println!();
 }
 
+fn filter(vect:&Vec<(char,i64)>,codes:&HashMap<(char,char),char>,freq:&mut HashMap<char,i64>)->Vec<(char,i64)>
+{
+    let mut res : Vec<(char,i64)> = vec![];
+    res.push(vect[0]);
+    for i in 1..vect.len()-1
+    {
+        let prev = vect[i-1].0;
+        let act  = vect[i  ].0;
+        let next = vect[i+1].0;
+        let pc = get_codes(codes,prev,act);        
+        let nc = get_codes(codes,act ,next);
+        
+        //println!("prev {} {} {}",prev,act,pc);
+        if pc!=' ' && nc!=' '
+        {
+            res.push(vect[i]);
+        }
+        else {
+            freq.insert(vect[i].0,freq.get(&vect[i].0).unwrap_or(&0)+vect[i].1);
+        }
+    }
+    res.push(vect[vect.len()-1]);
+    res
+}
+
 //NNCB
 //N(2)C(1)B(1)
 //N(1)C(1)N(1)B(1)C(1)H(1)B(1)
 //N(1)B(1)C(2)N(1)B(3)C(1)B(1)H(1)C(1)B(1)
 //N(1)B(3)C(1)N(1)C(2)N(1)B(2)N(1)B(1)N(1)B(2)C(1)H(1)B(1)H(2)B(1)C(1)H(1)B(1)
-fn expand(vect:&Vec<(char,i64)>,codes:&HashMap<String,char>)->Vec<(char,i64)>
+fn expand(vect:&Vec<(char,i64)>,codes:&HashMap<(char,char),char>)->Vec<(char,i64)>
 {
     let mut res : Vec<(char,i64)> = vec![];
-    if vect.len()<50 { printc(&vect); }
+    if vect.len()<150 { printc(&vect); }
    
     for i in 0..vect.len()-1 
     {
-//        res.push(vect[i]);
-//        res.append(&mut get_v(codes, vect[i],vect[i+1]) );
         get_v(&mut res,codes, vect[i],vect[i+1]);
-        //println!("{}b:{:?}",i,res);        
-        //println!("{}a:{:?}",i,res);
     }
 
     res.push(vect[vect.len()-1]);
-
     
     res = compact(&res.clone());
-    if res.len()<50  { printc(&res); }
+    if res.len()<150  { printc(&res); }
     res
 }
 
@@ -120,7 +136,7 @@ pub fn count(data:&[String],cnt:usize)->i64
         if line.contains(" -> ")
         {
             let tt : Vec<&str> = line.split(" -> ").collect();
-            code.insert(tt[0].to_string(),tt[1].chars().nth(0).unwrap());
+            code.insert((tt[0].chars().nth(0).unwrap() as char,tt[0].chars().nth(1).unwrap() as char),tt[1].chars().nth(0).unwrap());
         }        
     }
 
@@ -134,23 +150,25 @@ pub fn count(data:&[String],cnt:usize)->i64
         vect.push((res.chars().nth(i).unwrap(),1));
     }
 
-    vect = compact(&vect.clone());
-
+    vect = compact(&vect);
+    let mut freq = HashMap::new();
+ 
     for ccc in 0..cnt
     {
         println!("c={:?} {}",ccc,vect.len());
-        
-        
         vect = expand(&vect,&code);
+
+        println!("bf:{}", vect.len());
+        vect = filter(&vect,&code,&mut freq);
+        println!("af:{}", vect.len());
+
         //println!("bc-{:?}",vect);
         //vect = compact(&vect);
         //println!("ac-{:?}",vect);
     }
-
-    let mut freq = HashMap::new();
     
     for (c,cnt) in vect.iter() {       
-        freq.insert(c,freq.get(c).unwrap_or(&0)+cnt);
+        freq.insert(*c,freq.get(c).unwrap_or(&0)+cnt);
     }
     
     let maxv = freq.values().max().unwrap();
