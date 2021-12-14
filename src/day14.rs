@@ -2,7 +2,7 @@ use std::collections::{HashMap};
 
 pub fn count(data:&[String],cnt:usize)->i64
 {
-    let equation = data[0].to_string();
+    let start = data[0].to_string();
     let mut code  = HashMap::new();
     
     for line in data.iter()
@@ -10,45 +10,41 @@ pub fn count(data:&[String],cnt:usize)->i64
         if line.contains(" -> ")
         {
             let tt : Vec<&str> = line.split(" -> ").collect();
-            code.insert((tt[0].chars().nth(0).unwrap() as char,tt[0].chars().nth(1).unwrap() as char),tt[1].chars().nth(0).unwrap());
+            code.insert((tt[0].chars().nth(0).unwrap() as char,
+                           tt[0].chars().nth(1).unwrap() as char),
+                        tt[1].chars().nth(0).unwrap());
         }        
     }
-
-    let res = equation;
-    let mut vect = Vec::new();
 
     let mut freq = HashMap::new();
     let mut pairs = HashMap::new();
 
-    for i in 0..res.len() {
-        vect.push((res.chars().nth(i).unwrap(),1));
-
-        if i<res.len()-1 
+    for i in 0..start.len() 
+    {
+        if i<start.len()-1 
         {
-            let p = (res.chars().nth(i).unwrap(),res.chars().nth(i+1).unwrap());
+            let p = (start.chars().nth(i).unwrap(),
+                                 start.chars().nth(i+1).unwrap());
             pairs.insert(p, pairs.get(&p).unwrap_or(&0)+1);
         }
-        let p = res.chars().nth(i).unwrap();
+        let p = start.chars().nth(i).unwrap();
         freq.insert(p,freq.get(&p).unwrap_or(&0)+1);
     }
- 
- 
+  
     for _ in 0..cnt
     {
-        for (pair,count) in pairs.clone() {
-            let ch= *code.get(&pair).unwrap_or(&' ');
-            if ch!=' '
+        for (pair,count) in pairs.clone() 
+        {
+            if code.get(&pair)!=None
             {
+                let ch = *code.get(&pair).unwrap();
                 freq.insert(ch,freq.get(&ch).unwrap_or(&0)+count);
 
                 let p1 = (pair.0,     ch);
                 let p2 = (    ch, pair.1);
-                pairs.insert(p1, pairs.get(&p1).unwrap_or(&0)+count);
-                pairs.insert(pair, pairs.get(&pair).unwrap_or(&0)-count);
-                if p1!=p2
-                {
-                    pairs.insert(p2, pairs.get(&p2).unwrap_or(&0)+count);
-                }
+                pairs.insert(p1  , pairs.get(&p1  ).unwrap_or(&0) + count);
+                pairs.insert(p2  , pairs.get(&p2  ).unwrap_or(&0) + count);
+                pairs.insert(pair, pairs.get(&pair).unwrap_or(&0) - count);
             }
         }
     }
