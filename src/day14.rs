@@ -37,12 +37,11 @@ pub fn count(data:&[String],cnt:usize)->i64
             .for_each(|(pair,count)|
             if code.get(pair)!=None
             {
-                let ch = *code.get(pair).unwrap();
-                freq.insert(ch,freq.get(&ch).unwrap_or(&0)+count);
-
-                *pairs.entry((pair.0,     ch)).or_insert(0)+=count;
-                *pairs.entry((    ch, pair.1)).or_insert(0)+=count;
-                *pairs.entry(           *pair).or_insert(0)-=count;
+                let char = *code.get(pair).unwrap();
+                 *freq.entry(           char ).or_insert(0)+=count;
+                *pairs.entry((pair.0,   char)).or_insert(0)+=count;
+                *pairs.entry((  char, pair.1)).or_insert(0)+=count;
+                *pairs.entry(        *pair   ).or_insert(0)-=count;
             }
         )
     );
