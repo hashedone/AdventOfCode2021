@@ -1,130 +1,4 @@
-use std::{collections::{HashMap}, vec};
-
-fn get_codes(codes:&HashMap<(char,char),char>,a:char,b:char)->char
-{
-    *codes.get(&(a,b)).unwrap_or(&' ')
-}
-
-fn compact(t:&Vec<(char,i64)>)->Vec<(char,i64)>
-{
-    let mut res:Vec<(char,i64)> = Vec::new();
-    let mut last = ' ';
-
-    res.push(t[0]);
-    last = t[0].0;
-
-    for i in 1..t.len()
-    {
-        if last==t[i].0 
-        {
-            res.last_mut().unwrap().1+=t[i].1;
-            //res[res.len()-1].1 += 
-        }
-          else
-        {
-            res.push(t[i]);
-            last = t[i].0;
-        }
-    }
-   // res.push(t[t.len()-1]);
-    res
-}
-
-//N(2)C(1)B(1)
-//N(1)C(1)N(1)B(1)C(1)H(1)B(1)
-
-fn get_v(res:&mut Vec<(char,i64)>,codes:&HashMap<(char,char),char>,a:(char,i64),b:(char,i64))
-{ 
-    let aa = get_codes(codes,a.0,a.0);
-
-    if a.1>1 && aa!=' '
-    {
-        for _ in 0..a.1-1 {
-            res.push((a.0,1));
-            res.push(( aa,1));   
-        }
-        res.push((a.0,1));
-    }
-    else {
-        res.push(a);
-    }
-
-    let ab = get_codes(codes,a.0,b.0);
-    if ab!=' ' { res.push((ab,1)); }
-/*
-    let bb = get_codes(codes,b.0,b.0);
-    if b.1>1 && bb!=' '
-    {
-        for _ in 0..b.1-1 {
-            res.push((b.0,1));
-            res.push((bb,1));   
-        }
-        res.push((b.0,1));
-    }
-    else {
-        res.push(b);
-    }
-     */
-}
-//NNNNN
-//NCNCNCNCN
-
-fn printc(vect:&Vec<(char,i64)>)
-{
-    for (c,cnt) in vect.iter() {
-        if  *cnt==1 { print!("{}",*c);}
-        else {print!("{}{}",*c,*cnt);}
-    }
-    
-    println!();
-}
-
-fn filter(vect:&Vec<(char,i64)>,codes:&HashMap<(char,char),char>,freq:&mut HashMap<char,i64>)->Vec<(char,i64)>
-{
-    let mut res : Vec<(char,i64)> = vec![];
-    res.push(vect[0]);
-    for i in 1..vect.len()-1
-    {
-        let prev = vect[i-1].0;
-        let act  = vect[i  ].0;
-        let next = vect[i+1].0;
-        let pc = get_codes(codes,prev,act);        
-        let nc = get_codes(codes,act ,next);
-        
-        //println!("prev {} {} {}",prev,act,pc);
-        if pc!=' ' && nc!=' '
-        {
-            res.push(vect[i]);
-        }
-        else {
-            freq.insert(vect[i].0,freq.get(&vect[i].0).unwrap_or(&0)+vect[i].1);
-        }
-    }
-    res.push(vect[vect.len()-1]);
-    res
-}
-
-//NNCB
-//N(2)C(1)B(1)
-//N(1)C(1)N(1)B(1)C(1)H(1)B(1)
-//N(1)B(1)C(2)N(1)B(3)C(1)B(1)H(1)C(1)B(1)
-//N(1)B(3)C(1)N(1)C(2)N(1)B(2)N(1)B(1)N(1)B(2)C(1)H(1)B(1)H(2)B(1)C(1)H(1)B(1)
-fn expand(vect:&Vec<(char,i64)>,codes:&HashMap<(char,char),char>)->Vec<(char,i64)>
-{
-    let mut res : Vec<(char,i64)> = vec![];
-    if vect.len()<150 { printc(&vect); }
-   
-    for i in 0..vect.len()-1 
-    {
-        get_v(&mut res,codes, vect[i],vect[i+1]);
-    }
-
-    res.push(vect[vect.len()-1]);
-    
-    res = compact(&res.clone());
-    if res.len()<150  { printc(&res); }
-    res
-}
+use std::collections::{HashMap};
 
 pub fn count(data:&[String],cnt:usize)->i64
 {
@@ -140,43 +14,46 @@ pub fn count(data:&[String],cnt:usize)->i64
         }        
     }
 
-    let mut res = equation;
-
-    println!("{:?}",code);
-    
+    let res = equation;
     let mut vect = Vec::new();
+
+    let mut freq = HashMap::new();
+    let mut pairs = HashMap::new();
 
     for i in 0..res.len() {
         vect.push((res.chars().nth(i).unwrap(),1));
-    }
 
-    vect = compact(&vect);
-    let mut freq = HashMap::new();
+        if i<res.len()-1 
+        {
+            let p = (res.chars().nth(i).unwrap(),res.chars().nth(i+1).unwrap());
+            pairs.insert(p, pairs.get(&p).unwrap_or(&0)+1);
+        }
+        let p = res.chars().nth(i).unwrap();
+        freq.insert(p,freq.get(&p).unwrap_or(&0)+1);
+    }
  
-    for ccc in 0..cnt
+ 
+    for _ in 0..cnt
     {
-        println!("c={:?} {}",ccc,vect.len());
-        vect = expand(&vect,&code);
+        for (pair,count) in pairs.clone() {
+            let ch= *code.get(&pair).unwrap_or(&' ');
+            if ch!=' '
+            {
+                freq.insert(ch,freq.get(&ch).unwrap_or(&0)+count);
 
-        println!("bf:{}", vect.len());
-        vect = filter(&vect,&code,&mut freq);
-        println!("af:{}", vect.len());
-
-        //println!("bc-{:?}",vect);
-        //vect = compact(&vect);
-        //println!("ac-{:?}",vect);
+                let p1 = (pair.0,     ch);
+                let p2 = (    ch, pair.1);
+                pairs.insert(p1, pairs.get(&p1).unwrap_or(&0)+count);
+                pairs.insert(pair, pairs.get(&pair).unwrap_or(&0)-count);
+                if p1!=p2
+                {
+                    pairs.insert(p2, pairs.get(&p2).unwrap_or(&0)+count);
+                }
+            }
+        }
     }
     
-    for (c,cnt) in vect.iter() {       
-        freq.insert(*c,freq.get(c).unwrap_or(&0)+cnt);
-    }
-    
-    let maxv = freq.values().max().unwrap();
-    let minv = freq.values().min().unwrap();
-
-    println!("{:?}",freq);
-    
-    maxv-minv
+    freq.values().max().unwrap()-freq.values().min().unwrap()
 }
 
 pub fn part1(data:&[String])->i64
