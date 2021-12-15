@@ -1,4 +1,20 @@
-use std::collections::{HashMap};
+use std::collections::{HashMap,BinaryHeap};
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct Node
+{
+    distance : i32,
+           x : i32,
+           y : i32,
+}
+
+impl Node
+{
+    fn new(distance:i32,x:i32,y:i32)->Self
+    {
+        Self { distance,x,y }
+    }
+}
 
 fn parse(data:&[String],field:&mut HashMap<(i32,i32),i32>)
 {
@@ -6,90 +22,81 @@ fn parse(data:&[String],field:&mut HashMap<(i32,i32),i32>)
     {
         for x in line.1.chars().into_iter().enumerate()
         {
-            let p =  (x.0 as i32,line.0 as i32);
+            let p = (x.0 as i32,line.0 as i32);
             field.insert(p, x.1.to_digit(10).unwrap() as i32);
         }
     }
 }
 
-pub fn part1(data:&[String])->usize
+fn ok(x:i32,y:i32,dx:usize,dy:usize)->bool
 {
-    let mut f : HashMap<(i32,i32),i32> = HashMap::new();
-    parse(data,&mut f);
-
-    let dy = data.len() as i32;
-    let dx = data[0].len() as i32;
-   //let ff = f.clone();
-
-    for y in 0..dy {
-        
-        for x in 0..dx {
-            let px = if x>0 { *f.get(&(x - 1,y    )).unwrap() } else { i32::MAX };
-            let py = if y>0 { *f.get(&(x    ,y - 1)).unwrap() } else { i32::MAX };
-
-                if x==0 && y==0
-                {
-                    *f.get_mut(&(x,y)).unwrap() = 0;
-                }
-                else
-                {
-                    *f.get_mut(&(x,y)).unwrap() += i32::min(px,py);
-                }
-        }
-    }
- 
-//  println!("{:?}",f);
-//  (f[ &(dx-1,dy-1) ] - f[ &(0,0) ] ) as usize
-    f[ &(dx-1,dy-1) ] as usize
+    !(x<0 || y<0 || x>dx as i32-1 || y>dy as i32-1)
 }
 
-pub fn part2(data:&[String])->usize
+fn compute(field:&mut HashMap<(i32,i32),i32>,dx:usize,dy:usize)->i32
+{    
+    let mut dist = vec![vec![i32::MAX;dx];dy];
+    dist[0][0] = 0;
+
+    let mut queue : BinaryHeap<Node> = BinaryHeap::new(); 
+    queue.push( Node::new(i32::MAX,0,0) );
+
+    while !queue.is_empty() 
+    {
+        let node = queue.pop().unwrap();
+        let (distance,px,py) = (i32::MAX-node.distance,node.x,node.y);
+        let neigh = vec![(px+1,py  ),
+                         (px  ,py+1),
+                         (px-1,py  ),
+                         (px  ,py-1)];
+
+        for (sx,sy) in neigh
+        {
+            if ok(sx,sy,dx,dy) && dist[sy as usize][sx as usize] > distance + field[&(sx,sy)]
+            {
+                let distance = distance + field[&(sx,sy)];
+                dist[sy as usize][sx as usize] = distance;
+                queue.push(Node::new(i32::MAX-distance,sx,sy) );
+            }
+        }
+    }
+
+    dist[dy-1][dx-1]
+}
+
+pub fn part1(data:&[String])->i32
 {
-    let mut res : Vec<String> = Vec::new();
+    let mut field : HashMap<(i32,i32),i32> = HashMap::new();
+    parse(data,&mut field);
+    compute(&mut field,data[0].len(),data.len())
+}
+
+pub fn part2(data:&[String])->i32
+{
     let dy = data.len();
     let dx = data[0].len();
+    let mut field : HashMap<(i32,i32),i32> = HashMap::new();
 
-    //1163751742227486285333859739644496184175551729528622748628533385973964449618417555172952866628316397338597396444961841755517295286662831639777394274184496184175551729528666283163977739427418884153852955172952866628316397773942741888415385299952649631
-    for y in 0..dy*5 {
-        let mut ss = Vec::new();
-        for x in 0..dx*5 {
-            let ix = (x)/dx;
-            let iy = (y)/dy;
-            let uu = ix+iy;
-            
-            let mut v = (data[y%dy].chars().nth(x%dx).unwrap().to_digit(10).unwrap() as i32 + uu as i32);            
-            if v>9 {v-=9;}
+    parse(data,&mut field);
 
-            let ccc = v;//(v%10)+(v/10);
-            let mut cc = char::from_digit(v as u32, 10).unwrap() as char;
-            ss.push(cc);
+    for y in 0..dy {
+        for x in dx..dx*5 {
+            let mut v = field.get(&((x-dx) as i32,y as i32)).unwrap() + 1;
+            if v>9 {v=1;}
+            field.insert((x as i32,y as i32), v as i32);
         }
-        let str:String = ss.into_iter().collect();
-        res.push(str);
+    }
+
+    for y in dy..dy*5 {
+        for x in 0..dx*5 {            
+            let mut v = field.get(&(x as i32,(y-dy) as i32)).unwrap() + 1;
+            if v>9 {v=1;}
+            field.insert((x as i32,y as i32), v as i32);
+        }
     }
     
-    part1(&res)
+    compute(&mut field,dx*5,dy*5)    
 }
-
-//2617 wrong
-//2944 -327 wrong
-//2943 too high
-//2944 wrong
-//2945 too high
-
-//01234
-//1234
-//234
-//3
-//1163751742 2274862853 3385973964 4496184175 5517195186
-//1163751742 2274862853 3385973964 4496184175 5517295286ok
-//1163751742 2274862853 3385973964 4496084075 5507195186
-//1163751743 2274862854338597396544960840765507195187
-//11637517422274862853338597396444960840755507195186
-//11637517422274862853338597396444961841755517295286
-
-//67554889357866599146897761125791887223681299833479
-//67553889256755388925675538892567553889256755388925
 
 #[allow(unused)]
 pub fn solve(data:&[String])
@@ -128,26 +135,7 @@ fn test1_2()
 }
 
 #[test]
-fn test2_1()
-{
-    let v = vec![
-        "1163751742".to_string(),
-        "1381373672".to_string(),
-        "2136511328".to_string(),
-        "3694931569".to_string(),
-        "7463417111".to_string(),
-        "1319128137".to_string(),
-        "1359912421".to_string(),
-        "3125421639".to_string(),
-        "1293138521".to_string(),
-        "2311944581".to_string()
-    ];
-    assert_eq!(part2(&v),315);
-}
-
-
-#[test]
-fn test2_4()
+fn test1_3()
 {
     let v = vec![
 "11637517422274862853338597396444961841755517295286".to_string(),
@@ -203,3 +191,48 @@ fn test2_4()
 ];
 assert_eq!(part1(&v),315);
 }
+
+#[test]
+fn test2_1()
+{
+    let v = vec![
+        "1163751742".to_string(),
+        "1381373672".to_string(),
+        "2136511328".to_string(),
+        "3694931569".to_string(),
+        "7463417111".to_string(),
+        "1319128137".to_string(),
+        "1359912421".to_string(),
+        "3125421639".to_string(),
+        "1293138521".to_string(),
+        "2311944581".to_string()
+    ];
+    assert_eq!(part2(&v),315);
+}
+
+/*
+impl Ord for Node
+{
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.distance.cmp(&self.distance)
+    }
+}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(other.cmp(self))
+    }
+}
+*/
+
+//let mut qq : BinaryHeap<Node> = BinaryHeap::new();
+//
+//qq.push(Node::new(70, 2, 1));
+//qq.push(Node::new(170, 2, 2));
+//qq.push(Node::new(10, 2, 3));
+//qq.push(Node::new(60, 2, 4));
+//
+//println!("{:?}",qq.pop());
+//println!("{:?}",qq.pop());
+//println!("{:?}",qq.pop());
+//println!("{:?}",qq.pop());
