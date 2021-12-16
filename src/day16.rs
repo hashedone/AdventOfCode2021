@@ -1,10 +1,6 @@
 fn string_to_binary(table:&str)->String
 {
-    let mut res = vec![];
-
-    for c in table.chars()
-    {                
-        let s =         
+    table.chars().map(|c|
         match c 
         {
             '0' => "0000",
@@ -24,26 +20,23 @@ fn string_to_binary(table:&str)->String
             'E' => "1110",
             'F' => "1111",
              _  => panic!("error unknown code"),
-        };
-
-        res.push(s);
-    }   
-
-    res.join("")
+        }
+    ).collect::<String>()
 }
 
 fn vector_to_binary(table:&str)->u64
 {
-    table.chars().fold(0,|acc,x| ((acc<<1) | x.to_digit(10).unwrap() as u64))
+    table.chars()
+         .fold(0,|acc,x| ((acc<<1) | x.to_digit(10).unwrap() as u64))
 }
 
 fn oper(id:u64,acum:Option<i64>,val:i64)->i64
 {
     match id {
-        0 => {  acum.unwrap_or(0) +   val              },
-        1 => {  acum.unwrap_or(1) *   val              },        
-        2 => {  acum.unwrap_or(val).min(val)             },        
-        3 => {  acum.unwrap_or(val).max(val)             },
+        0 =>    acum.unwrap_or(0) +   val                                        ,
+        1 =>    acum.unwrap_or(1) *   val                                        ,
+        2 =>    acum.unwrap_or(val).min(val)                                     ,
+        3 =>    acum.unwrap_or(val).max(val)                                     ,
         5 => if acum==None { val } else if acum.unwrap_or(val) >val {1} else {0} ,
         6 => if acum==None { val } else if acum.unwrap_or(val) <val {1} else {0} ,
         7 => if acum==None { val } else if acum.unwrap_or(val)==val {1} else {0} ,
@@ -54,17 +47,17 @@ fn oper(id:u64,acum:Option<i64>,val:i64)->i64
 fn parse_packet1(bin:&str,id:usize)->(u64,usize)
 {
     let mut i = id;
-    let ver = vector_to_binary(&bin[i..i+3]);       i+=3;    
-    let id  = vector_to_binary(&bin[i..i+3]);       i+=3;
+    let ver = vector_to_binary(&bin[i..i+3]);   i+=3;    
+    let id  = vector_to_binary(&bin[i..i+3]);   i+=3;
     let mut res = ver;
 
     if id!=4
     {       
-        let lt_id= vector_to_binary(&bin[i..i+1]);      i+=1;
+        let lt_id= vector_to_binary(&bin[i..i+1]);  i+=1;
 
         if lt_id==1
         {
-            let number_sub = vector_to_binary(&bin[i..i+11]);          i+=11;
+            let number_sub = vector_to_binary(&bin[i..i+11]);   i+=11;
 
             for _ in 0..number_sub 
             {
@@ -75,8 +68,8 @@ fn parse_packet1(bin:&str,id:usize)->(u64,usize)
         }
           else 
         {
-            let number_len = vector_to_binary(&bin[i..i+15]) as usize ;       i+=15;
-            let limit = i + number_len;
+            let number_len = vector_to_binary(&bin[i..i+15]);   i+=15;
+            let limit      = i + number_len as usize;
 
             while i<limit 
             {
@@ -101,20 +94,18 @@ fn parse_packet1(bin:&str,id:usize)->(u64,usize)
 fn parse_packet2(bin:&str,id:usize)->(u64,usize)
 {
     let mut i = id;
-    let ver = vector_to_binary(&bin[i..i+3]);    i+=3; 
-    let id  = vector_to_binary(&bin[i..i+3]);    i+=3;
+    let ver = vector_to_binary(&bin[i..i+3]);   i+=3; 
+    let id  = vector_to_binary(&bin[i..i+3]);   i+=3;
 
     let mut res = ver;
 
     if id!=4
     {       
-        let lt_id= vector_to_binary(&bin[i..i+1]);
-      
-        i+=1;
+        let lt_id= vector_to_binary(&bin[i..i+1]);  i+=1;
 
         if lt_id==1
         {
-            let number_sub = vector_to_binary(&bin[i..i+11]);            i+=11;
+            let number_sub = vector_to_binary(&bin[i..i+11]);   i+=11;
             let mut acc: Option<i64> = None;
           
             for _ in 0..number_sub 
@@ -128,8 +119,8 @@ fn parse_packet2(bin:&str,id:usize)->(u64,usize)
         }
           else 
         {
-            let number_len = vector_to_binary(&bin[i..i+15]) as usize;        i+=15;
-            let limit = i+number_len;
+            let number_len = vector_to_binary(&bin[i..i+15]);   i+=15;
+            let limit = i + number_len as usize;
             let mut acc: Option<i64> = None;
 
             while i<limit 
@@ -140,21 +131,21 @@ fn parse_packet2(bin:&str,id:usize)->(u64,usize)
                 res+=r.0;
                 i=r.1;   
             }
-            res = ( acc.unwrap_or(0)) as u64;
+            res = (acc.unwrap_or(0)) as u64;
         }
     }
       else 
     {
-        let mut ss ="".to_string();
+        let mut buffer ="".to_string();
         let mut bit_one = true;
     
         while bit_one 
         {
-            bit_one = bin.chars().nth(i).unwrap()=='1';            i+=1;
-            ss.push_str(&bin[i..i+4]);                      i+=4;
+            bit_one = bin.chars().nth(i).unwrap()=='1'; i+=1;
+            buffer.push_str(&bin[i..i+4]);  i+=4;
         }
         
-        res = vector_to_binary(&ss.to_owned());    
+        res = vector_to_binary(&buffer.to_owned());    
     }
 
     (res,i)
@@ -177,35 +168,6 @@ pub fn solve(data:&[String])
     println!("part1:{}",part1(data));
     println!("part2:{}",part2(data));
 }
-
-/*
-#[test]
-fn test0()
-{
-    let v = vec![
-        "D2FE28".to_string(),
-        ];
-    assert_eq!(part1(&v),2021);
-}
-
-#[test]
-fn test01()
-{
-    let v = vec![
-        "38006F45291200".to_string(),
-        ];
-    assert_eq!(part1(&v),31);
-}
-
-#[test]
-fn test02()
-{
-    let v = vec![
-        "EE00D40C823060".to_string(),
-        ];
-    assert_eq!(part1(&v),6);
-}
- */
 
 #[test]
 fn test1()
@@ -297,5 +259,3 @@ fn test2_8()
     let v = vec!["9C0141080250320F1802104A08".to_string()];
     assert_eq!(part2(&v),1);
 }
-
-
