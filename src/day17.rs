@@ -1,9 +1,9 @@
-pub fn part1(data:&[String])->usize
+pub fn part1(_data:&[String])->usize
 {
     0
 }
 
-pub fn part2(data:&[String])->usize
+pub fn part2(_data:&[String])->usize
 {
     0
 }
