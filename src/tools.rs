@@ -46,3 +46,36 @@ where P: AsRef<Path>, {
     let file = File::open(filename)?;
     Ok(io::BufReader::new(file).lines())
 }
+
+#[allow(unused)]
+pub fn get_between(str:&str,from:&str,to:&str)->String
+{
+    if from.is_empty()
+    {
+        let e =          str.find(to).unwrap();
+        return (&str[..e]).to_string();
+    }
+
+    if to.is_empty()
+    {
+        let s =          str.find(from).unwrap();
+        return (&str[s+from.len()..]).to_string();
+    }
+
+        let s =          str.find(from).unwrap() + from.len();
+        let e = s + str[s..].find(to  ).unwrap();
+        
+    (&str[s..e]).to_string()
+}
+
+#[allow(unused)]
+pub fn i32_get_between(str:&str,from:&str,to:&str)->i32
+{
+    get_between(str, from, to).parse::<i32>().unwrap()
+}
+
+#[allow(unused)]
+pub fn f32_get_between(str:&str,from:&str,to:&str)->f32
+{
+    get_between(str, from, to).parse::<f32>().unwrap()
+}

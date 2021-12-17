@@ -121,17 +121,17 @@ fn main() {
 //        day15::solve(&day15_data);
 //    }
 
-    {
-        let _timer = Timer::new();
-        let day16_data  = tools::read_1d_string("data/day16.txt");
-        day16::solve(&day16_data); 
-    }
-//
 //    {
 //        let _timer = Timer::new();
-//        let day17_data  = tools::read_1d_string("data/day17.txt");
-//        day17::solve(&day17_data);
+//        let day16_data  = tools::read_1d_string("data/day16.txt");
+//        day16::solve(&day16_data); 
 //    }
+//
+    {
+        let _timer = Timer::new();
+        let day17_data  = tools::read_1d_string("data/day17.txt");
+        day17::solve(&day17_data);
+    }
 //
 //    {
 //        let _timer = Timer::new();
