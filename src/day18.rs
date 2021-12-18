@@ -1,19 +1,18 @@
-fn add(a:&String,b:&String)->String
+fn add(a:&str,b:&str)->String
 {
     format!("[{},{}]",a,b)
 }
 
-fn is_split(s:String)->bool
+fn is_split(s:&str)->bool
 {
-    s.replace("[", ",")
-     .replace("]", ",")
+    s.replace("[", "")
+     .replace("]", "")
      .split(',')
-     .filter(|&s| !s.is_empty())
      .map(|s| s.parse::<i64>().unwrap())
      .any(|n| n>=10)
 }
 
-fn is_explode(s:String)->Option<(usize,usize)>
+fn is_explode(s:&str)->Option<(usize,usize)>
 {
     let mut brackets=0;
 
@@ -58,54 +57,42 @@ fn search_digit(s:&str,id:i64,delta:i64)->Option<usize>
     None
 }
 
-fn add_number(ll:&str,lf:usize,ln:i64)->String {
-
-    let a = lf as usize;
-    let mut b = lf as usize;
-    if lf+1<ll.len() && ll.chars().nth(a+1).unwrap().is_digit(10) 
-    {
-        b=a+1;
-    }
-
-    let num = ll[a..b+1].to_string().parse::<i64>().unwrap() + ln;
-    format!("{}{}{}",&ll[..a],num,&ll[b+1..])
+fn add_number(s:&str,id:usize,value:i64)->String {
+    
+    let b = if id+1<s.len() && s.chars().nth(id+1).unwrap().is_digit(10) { id+1 } else { id };
+    let num = s[id..b+1].to_string().parse::<i64>().unwrap() + value;
+    format!("{}{}{}",&s[..id],num,&s[b+1..])
 }
 
-fn explode(s:String)->String {
-    let (a,b) = is_explode(s.to_string()).unwrap();
-    let ll = &s[   ..a];
-    let mm = &s[a+1..b];
-    let rr = &s[b+1.. ];
+fn explode(s:&str)->String 
+{
+    let (a,b) = is_explode(s).unwrap();
+    let (left,middle,right) = (&s[..a],&s[a+1..b],&s[b+1.. ]);
 
-    //println!("ll==={}",ll);
-    //println!("mm==={}",mm);
-    //println!("rr==={}",rr);
-
-    let tab = mm.split(',').collect::<Vec<&str>>();
+    let tab = middle.split(',').collect::<Vec<&str>>();
     let ln = tab[0].parse::<i64>().unwrap();
     let rn = tab[1].parse::<i64>().unwrap();
-    let lf = search_digit(ll,ll.len() as i64-1,-1);
-    let rf = search_digit(rr,0         , 1);
-    //println!("{:?}",lf);
-    //println!("{:?}",rf);
-    let ll = if lf!=None { add_number(   ll,lf.unwrap(),ln) } else { ll.to_string() };
-    let rr = if rf!=None { add_number(rr,rf.unwrap(),rn) } else { rr.to_string() };
+    let lf = search_digit(left,left.len() as i64-1,-1);
+    let rf = search_digit(right,0         , 1);
+    let ll = if lf!=None { add_number(   left,lf.unwrap(),ln) } else { left.to_string() };
+    let rr = if rf!=None { add_number(right,rf.unwrap(),rn) } else { right.to_string() };
     format!("{}{}{}",ll,"0",rr)
 }
 
-fn split(s:String)->String
+fn split(s:&str)->String
 {
     for i in 0..s.len()-1
     {
         let d1 = s.chars().nth(i  ).unwrap();
         let d2 = s.chars().nth(i+1).unwrap();
+
         if d1.is_digit(10) &&
            d2.is_digit(10)
         {
-            let n = d1.to_digit(10).unwrap()*10 + d2.to_digit(10).unwrap();
-            let l = n/2;
-            let r = (n+1)/2;
-            return format!("{}[{},{}]{}",&s[..i],l,r,&s[i+2..]);
+            let n     = d1.to_digit(10).unwrap()*10 + d2.to_digit(10).unwrap();
+            let left  = n/2;
+            let right = (n+1)/2;
+            return format!("{}[{},{}]{}",&s[..i],left,right,&s[i+2..]);
         }
     }
     "".to_string()
@@ -113,7 +100,7 @@ fn split(s:String)->String
 
 fn find_coma(s:&str)->usize
 {
-    let mut b= 0;
+    let mut b = 0;
     for (id,c) in s.chars().enumerate()
     {
         match c
@@ -129,9 +116,9 @@ fn find_coma(s:&str)->usize
 
 fn magnitude(s:&str)->i64
 {
-    if s.chars().next().unwrap()=='['
+    if s.starts_with('[')
     {
-        let coma_pos = find_coma(&s);
+        let coma_pos = find_coma(s);
         3*magnitude(&s[1..coma_pos]) + 2*magnitude(&s[coma_pos+1..s.len()-1])
     }
       else
@@ -140,39 +127,28 @@ fn magnitude(s:&str)->i64
     }
 }
 
-fn big_sum(a:&String,b:&String)->String
+fn big_sum(a:&str,b:&str)->String
 {
-    let mut ab = add(a,b).to_string();
-    // println!("after addition: {}",ab);
+    let mut ab = add(a,b);
         
-    while is_split(ab.to_string()) || is_explode(ab.to_string())!=None 
+    while is_split(&ab) || is_explode(&ab)!=None 
     {
-        if is_explode(ab.to_string())!=None 
-        { 
-            ab = explode(ab.to_string());
-        }
-        else if is_split(ab.to_string()) 
-        { 
-            ab = split(ab.to_string());
-        }
-
+             if is_explode(&ab)!=None { ab = explode(&ab); }
+        else if is_split(&ab)         { ab =   split(&ab); }
     }
     ab
 }
 
 fn compute_sum(data:&[String])->String
 {
-    let mut acc = data[0].to_string();
-
-    for c in data.iter().skip(1) {
-        acc = big_sum(&acc, c);
-    }
-    acc
+    data.iter()
+        .skip(1)
+        .fold(data[0].to_string(), |acc,c| big_sum(&acc, c))
 }
 
 fn compute(data:&[String])->i64
 {
-    magnitude(&compute_sum(data).to_owned())
+    magnitude(&compute_sum(data))
 }
 
 pub fn part1(data:&[String])->i64
@@ -182,17 +158,12 @@ pub fn part1(data:&[String])->i64
 
 pub fn part2(data:&[String])->i64
 {
-    let mut res =0;// i64::MIN;
-    for i in 0..data.len()
-    {
-        for j in 0..data.len() 
-        {
-            if i!=j
-            {
-                res = res.max(magnitude(&big_sum(&data[i],&data[j])));
-                res = res.max(magnitude(&big_sum(&data[j],&data[i])));
-            }   
-        }
+    let mut res = i64::MIN;
+
+    for i in data.iter() {
+    for j in data.iter() {
+        if i!=j { res = res.max(magnitude(&big_sum(i,j))); }
+    }
     }
 
     res
@@ -210,13 +181,13 @@ pub fn solve(data:&[String])
 #[test]
 fn tests_1()
 {
-    assert_eq!(split("[[[[0,7],4],[15,[0,13]]],[1,1]]".to_string()),"[[[[0,7],4],[[7,8],[0,13]]],[1,1]]".to_string());
+    assert_eq!(split("[[[[0,7],4],[15,[0,13]]],[1,1]]"),"[[[[0,7],4],[[7,8],[0,13]]],[1,1]]".to_string());
 }
 
 #[test]
 fn tests_2()
 {
-    assert_eq!(split("[[[[0,7],4],[[7,8],[0,13]]],[1,1]]".to_string()),"[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]".to_string());
+    assert_eq!(split("[[[[0,7],4],[[7,8],[0,13]]],[1,1]]"),"[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]".to_string());
 }
 
 #[test]
@@ -265,67 +236,67 @@ fn tests_9()
 #[test]
 fn tests_10()
 {
-    assert_eq!(explode("[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]".to_string()),"[[[[0,7],4],[7,[[8,4],9]]],[1,1]]".to_string());
+    assert_eq!(explode("[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]"),"[[[[0,7],4],[7,[[8,4],9]]],[1,1]]".to_string());
 }
 
 #[test]
 fn tests_11()
 {
-    assert_eq!(explode("[[[[0,7],4],[7,[[8,4],9]]],[1,1]]".to_string()),"[[[[0,7],4],[15,[0,13]]],[1,1]]".to_string());
+    assert_eq!(explode("[[[[0,7],4],[7,[[8,4],9]]],[1,1]]"),"[[[[0,7],4],[15,[0,13]]],[1,1]]".to_string());
 }
 
 #[test]
 fn tests_12()
 {
-    assert_eq!(explode("[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]".to_string()),"[[[[0,7],4],[[7,8],[6,0]]],[8,1]]".to_string());
+    assert_eq!(explode("[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]"),"[[[[0,7],4],[[7,8],[6,0]]],[8,1]]".to_string());
 }
 
 #[test]
 fn teste_01()
 {
-    assert_eq!(explode("[[[[[9,8],1],2],3],4]".to_string()), "[[[[0,9],2],3],4]".to_string());
+    assert_eq!(explode("[[[[[9,8],1],2],3],4]"), "[[[[0,9],2],3],4]".to_string());
 }
 
 #[test]
 fn teste_02()
 {
-    assert_eq!(explode("[7,[6,[5,[4,[3,2]]]]]".to_string()), "[7,[6,[5,[7,0]]]]".to_string());
+    assert_eq!(explode("[7,[6,[5,[4,[3,2]]]]]"), "[7,[6,[5,[7,0]]]]".to_string());
 }
 
 #[test]
 fn teste_03()
 {
-    assert_eq!(explode("[[6,[5,[4,[3,2]]]],1]".to_string()), "[[6,[5,[7,0]]],3]".to_string());
+    assert_eq!(explode("[[6,[5,[4,[3,2]]]],1]"), "[[6,[5,[7,0]]],3]".to_string());
 }
 
 #[test]
 fn teste_04()
 {
-    assert_eq!(explode("[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]".to_string()), "[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]".to_string());
+    assert_eq!(explode("[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]"), "[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]".to_string());
 }
 
 #[test]
 fn teste_05()
 {
-    assert_eq!(explode("[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]".to_string()), "[[3,[2,[8,0]]],[9,[5,[7,0]]]]".to_string());
+    assert_eq!(explode("[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]"), "[[3,[2,[8,0]]],[9,[5,[7,0]]]]".to_string());
 }
 
 #[test]
 fn testt_13()
 {
-    assert_eq!(is_explode("[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]".to_string()),Some((4,8)));
+    assert_eq!(is_explode(&"[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]".to_string()),Some((4,8)));
 }
 
 #[test]
 fn testt_14()
 {
-    assert_eq!(is_explode("[[[[0,7],4],[7,[[8,4],9]]],[1,1]]".to_string()),Some((16,20)));
+    assert_eq!(is_explode(&"[[[[0,7],4],[7,[[8,4],9]]],[1,1]]".to_string()),Some((16,20)));
 }
 
 #[test]
 fn testt_15()
 {
-    assert_eq!(is_explode("[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]".to_string()),Some((22,26)));
+    assert_eq!(is_explode(&"[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]".to_string()),Some((22,26)));
 }
 
 
