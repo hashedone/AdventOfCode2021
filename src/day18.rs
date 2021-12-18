@@ -1,48 +1,48 @@
-//use std::{collections::HashSet, fmt::format};
-//use crate::tools;
-
-fn add(a:String,b:String)->String
+fn add(a:&String,b:&String)->String
 {
     format!("[{},{}]",a,b)
 }
 
 fn is_split(s:String)->bool
 {
-    let ss = s.replace("[", ",");
-    let ss = ss.replace("]", ",");
-    let t = ss.split(',').collect::<Vec<&str>>();
-
-    t.into_iter()
+    s.replace("[", ",")
+     .replace("]", ",")
+     .split(',')
      .filter(|&s| !s.is_empty())
      .map(|s| s.parse::<i64>().unwrap())
-     .filter(|&n| n>=10)
-     .count()>0
+     .any(|n| n>=10)
 }
-//2734406874827850948 too high
 
 fn is_explode(s:String)->Option<(usize,usize)>
 {
-    let mut b=0;
-    for i in 0..s.len()
-    {
-        let d1 = s.chars().nth(i  ).unwrap();
-        
-        if d1=='[' && b==4
+    let mut brackets=0;
+
+    for (i,d1) in s.chars().enumerate()
+    {        
+        match d1
         {
-            let mut c=0;
-            for j in i+1..s.len()
-            {
-                let cc = s.chars().nth(j).unwrap();
-                if cc==',' { c+=1; }
-                if cc=='[' { break; }
-                if cc==']' { if c==1 {return Some((i,j));} else { break;}  }            
-            }
+            '[' => { 
+                    if brackets==4
+                    {
+                        let mut c=0;
+                        
+                        for (j,cc) in s[i+1..].chars().enumerate()
+                        {
+                            if cc==',' {    c+=1; if c>1 { break; }        }
+                            if cc=='[' {                   break;          }
+                            if cc==']' { if c==1 { return Some((i,j+i+1)); }
+                                            else {                  break; } }
+                        }
+                    }
+                    brackets+=1;         
+                   },
+            ']' => brackets-=1,
+             _  => {}
         }
-        if d1=='[' { b+=1; }
-        if d1==']' { b-=1; }
     }
     None
 }
+
 fn search_digit(s:&str,id:i64,delta:i64)->Option<usize>
 {
     let mut id = id;
@@ -50,7 +50,7 @@ fn search_digit(s:&str,id:i64,delta:i64)->Option<usize>
     {
         if s.chars().nth(id as usize).unwrap().is_digit(10)
         {
-            if id-1>=0 && s.chars().nth((id-1) as usize).unwrap().is_digit(10) {return Some((id-1) as usize);}
+            if id>0 && s.chars().nth((id-1) as usize).unwrap().is_digit(10) { return Some((id-1) as usize); }
             return Some(id as usize);
         }
         id+=delta;        
@@ -62,20 +62,20 @@ fn add_number(ll:&str,lf:usize,ln:i64)->String {
 
     let a = lf as usize;
     let mut b = lf as usize;
-    if lf+1<ll.len() && ll.chars().nth(a+1).unwrap().is_digit(10) {
+    if lf+1<ll.len() && ll.chars().nth(a+1).unwrap().is_digit(10) 
+    {
         b=a+1;
     }
 
-    //println!("number:(*{}*)",ll[a..b+1].to_string());
     let num = ll[a..b+1].to_string().parse::<i64>().unwrap() + ln;
     format!("{}{}{}",&ll[..a],num,&ll[b+1..])
 }
 
 fn explode(s:String)->String {
     let (a,b) = is_explode(s.to_string()).unwrap();
-    let ll = &s[..a];
+    let ll = &s[   ..a];
     let mm = &s[a+1..b];
-    let rr = &s[b+1..];
+    let rr = &s[b+1.. ];
 
     //println!("ll==={}",ll);
     //println!("mm==={}",mm);
@@ -110,6 +110,7 @@ fn split(s:String)->String
     }
     "".to_string()
 }
+
 fn find_coma(s:&str)->usize
 {
     let mut b= 0;
@@ -126,22 +127,20 @@ fn find_coma(s:&str)->usize
     0
 }
 
-fn magnitude(s:String)->i64
+fn magnitude(s:&str)->i64
 {
-    //[[[[5,0],[7,4]],[5,5]],[6,6]]
     if s.chars().next().unwrap()=='['
     {
-        let c = find_coma(&s);
-        return 3*magnitude(s[1..c].to_owned()) + 2*magnitude(s[c+1..s.len()-1].to_owned());
+        let coma_pos = find_coma(&s);
+        3*magnitude(&s[1..coma_pos]) + 2*magnitude(&s[coma_pos+1..s.len()-1])
     }
       else
-    {
-        
-        return s.parse::<i64>().unwrap()
+    {        
+        s.parse::<i64>().unwrap()
     }
 }
 
-fn big_sum(a:String,b:String)->String
+fn big_sum(a:&String,b:&String)->String
 {
     let mut ab = add(a,b).to_string();
     // println!("after addition: {}",ab);
@@ -150,15 +149,11 @@ fn big_sum(a:String,b:String)->String
     {
         if is_explode(ab.to_string())!=None 
         { 
-            //println!("explode");
             ab = explode(ab.to_string());
-            //println!("after explode:  {}",ab);
         }
         else if is_split(ab.to_string()) 
         { 
-            //println!("split");
             ab = split(ab.to_string());
-            //println!("after split:    {}",ab);
         }
 
     }
@@ -167,19 +162,17 @@ fn big_sum(a:String,b:String)->String
 
 fn compute_sum(data:&[String])->String
 {
-    let mut acc=data[0].to_string();
-    //println!("acc:{}",acc);
-    for i in 1..data.len() {
-        acc = big_sum(acc, data[i].to_string());
-        //println!("acc:{}",acc);
+    let mut acc = data[0].to_string();
+
+    for c in data.iter().skip(1) {
+        acc = big_sum(&acc, c);
     }
     acc
 }
 
-
 fn compute(data:&[String])->i64
 {
-    magnitude(compute_sum(data))
+    magnitude(&compute_sum(data).to_owned())
 }
 
 pub fn part1(data:&[String])->i64
@@ -196,15 +189,13 @@ pub fn part2(data:&[String])->i64
         {
             if i!=j
             {
-                res = res.max(magnitude(big_sum(data[i].to_string(),data[j].to_string())));
-                res = res.max(magnitude(big_sum(data[j].to_string(),data[i].to_string())));
+                res = res.max(magnitude(&big_sum(&data[i],&data[j])));
+                res = res.max(magnitude(&big_sum(&data[j],&data[i])));
             }   
         }
     }
 
     res
-    
-    
 }
 
 #[allow(unused)]
@@ -213,24 +204,6 @@ pub fn solve(data:&[String])
     println!("Day18");
     println!("part1:{}",part1(data));
     println!("part2:{}",part2(data));
-}
-
-#[test]
-fn test1()
-{
-//    let v = vec![
-    //];
-    //assert_eq!(part1("[[[[1,1],[2,2]],[3,3]],[4,4]]".to_string()),"[[[[3,0],[5,3]],[4,4]],[5,5]]");
-}
-
-
-#[test]
-fn test2()
-{
-    //let v = vec![
-      //  "[[[[3,0],[5,3]],[4,4]],[5,5]]".to_string()
-    //];
-    //assert_eq!(part1(v),"[[[[3,0],[5,3]],[4,4]],[5,5]]");
 }
 
 
@@ -246,49 +219,46 @@ fn tests_2()
     assert_eq!(split("[[[[0,7],4],[[7,8],[0,13]]],[1,1]]".to_string()),"[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]".to_string());
 }
 
-
 #[test]
 fn tests_3()
 {
-    assert_eq!(add("[1,2]".to_string(), "[[3,4],5]".to_string()),"[[1,2],[[3,4],5]]".to_string());
+    assert_eq!(add(&"[1,2]".to_string(), &"[[3,4],5]".to_string()),"[[1,2],[[3,4],5]]".to_string());
 }
-
- 
 
 #[test]
 fn tests_4()
 {
-    assert_eq!(magnitude("[[1,2],[[3,4],5]]".to_string()), 143);
+    assert_eq!(magnitude("[[1,2],[[3,4],5]]"), 143);
 }
 
 #[test]
 fn tests_5()
 {
-    assert_eq!(magnitude("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]".to_string()),  1384);
+    assert_eq!(magnitude("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]"),  1384);
 }
 
 #[test]
 fn tests_6()
 {
-    assert_eq!(magnitude("[[[[1,1],[2,2]],[3,3]],[4,4]]".to_string()),  445);
+    assert_eq!(magnitude("[[[[1,1],[2,2]],[3,3]],[4,4]]"),  445);
 }
 
 #[test]
 fn tests_7()
 {
-    assert_eq!(magnitude("[[[[3,0],[5,3]],[4,4]],[5,5]]".to_string()),  791);
+    assert_eq!(magnitude("[[[[3,0],[5,3]],[4,4]],[5,5]]"),  791);
 }
 
 #[test]
 fn tests_8()
 {
-    assert_eq!(magnitude("[[[[5,0],[7,4]],[5,5]],[6,6]]".to_string()),  1137);
+    assert_eq!(magnitude("[[[[5,0],[7,4]],[5,5]],[6,6]]"),  1137);
 }
 
 #[test]
 fn tests_9()
 {
-    assert_eq!(magnitude("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]".to_string()),  3488);
+    assert_eq!(magnitude("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]"),  3488);
 }
 
 
@@ -398,7 +368,7 @@ fn test2_2()
 #[test]
 fn test2_3()
 {
-    assert_eq!(big_sum("[[[[4,3],4],4],[7,[[8,4],9]]]".to_string(),"[1,1]".to_string()),"[[[[0,7],4],[[7,8],[6,0]]],[8,1]]".to_string());
+    assert_eq!(big_sum(&"[[[[4,3],4],4],[7,[[8,4],9]]]".to_string(),&"[1,1]".to_string()),"[[[[0,7],4],[[7,8],[6,0]]],[8,1]]".to_string());
 }
 
 #[test]
@@ -439,7 +409,6 @@ fn testsi_3()
         ];
         assert_eq!(compute_sum(&v),"[[[[5,0],[7,4]],[5,5]],[6,6]]");
 }
-
 
 #[test]
 fn test_part2()
