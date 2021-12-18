@@ -14,10 +14,11 @@ fn is_split(s:String)->bool
 
     t.into_iter()
      .filter(|&s| !s.is_empty())
-     .map(|s| s.parse::<i32>().unwrap())
+     .map(|s| s.parse::<i64>().unwrap())
      .filter(|&n| n>=10)
      .count()>0
 }
+//2734406874827850948 too high
 
 fn is_explode(s:String)->Option<(usize,usize)>
 {
@@ -42,10 +43,10 @@ fn is_explode(s:String)->Option<(usize,usize)>
     }
     None
 }
-fn search_digit(s:&str,id:i32,delta:i32)->Option<usize>
+fn search_digit(s:&str,id:i64,delta:i64)->Option<usize>
 {
     let mut id = id;
-    while id>=0 && id<s.len() as i32
+    while id>=0 && id<s.len() as i64
     {
         if s.chars().nth(id as usize).unwrap().is_digit(10)
         {
@@ -57,7 +58,7 @@ fn search_digit(s:&str,id:i32,delta:i32)->Option<usize>
     None
 }
 
-fn add_number(ll:&str,lf:usize,ln:i32)->String {
+fn add_number(ll:&str,lf:usize,ln:i64)->String {
 
     let a = lf as usize;
     let mut b = lf as usize;
@@ -66,7 +67,7 @@ fn add_number(ll:&str,lf:usize,ln:i32)->String {
     }
 
     //println!("number:(*{}*)",ll[a..b+1].to_string());
-    let num = ll[a..b+1].to_string().parse::<i32>().unwrap() + ln;
+    let num = ll[a..b+1].to_string().parse::<i64>().unwrap() + ln;
     format!("{}{}{}",&ll[..a],num,&ll[b+1..])
 }
 
@@ -81,9 +82,9 @@ fn explode(s:String)->String {
     //println!("rr==={}",rr);
 
     let tab = mm.split(',').collect::<Vec<&str>>();
-    let ln = tab[0].parse::<i32>().unwrap();
-    let rn = tab[1].parse::<i32>().unwrap();
-    let lf = search_digit(ll,ll.len() as i32-1,-1);
+    let ln = tab[0].parse::<i64>().unwrap();
+    let rn = tab[1].parse::<i64>().unwrap();
+    let lf = search_digit(ll,ll.len() as i64-1,-1);
     let rf = search_digit(rr,0         , 1);
     //println!("{:?}",lf);
     //println!("{:?}",rf);
@@ -125,7 +126,7 @@ fn find_coma(s:&str)->usize
     0
 }
 
-fn magnitude(s:String)->i32
+fn magnitude(s:String)->i64
 {
     //[[[[5,0],[7,4]],[5,5]],[6,6]]
     if s.chars().next().unwrap()=='['
@@ -136,7 +137,7 @@ fn magnitude(s:String)->i32
       else
     {
         
-        return s.parse::<i32>().unwrap()
+        return s.parse::<i64>().unwrap()
     }
 }
 
@@ -145,25 +146,21 @@ fn big_sum(a:String,b:String)->String
     let mut ab = add(a,b).to_string();
     // println!("after addition: {}",ab);
         
-    while is_split(ab.to_string()) || is_explode(ab.to_string())!=None {
-        while is_explode(ab.to_string())!=None 
+    while is_split(ab.to_string()) || is_explode(ab.to_string())!=None 
+    {
+        if is_explode(ab.to_string())!=None 
         { 
             //println!("explode");
             ab = explode(ab.to_string());
             //println!("after explode:  {}",ab);
-            while is_split(ab.to_string()) 
-            { 
-                //println!("split");
-                ab = split(ab.to_string());
-                //println!("after split:    {}",ab);
-            }
         }
-        while is_split(ab.to_string()) 
+        else if is_split(ab.to_string()) 
         { 
             //println!("split");
             ab = split(ab.to_string());
             //println!("after split:    {}",ab);
         }
+
     }
     ab
 }
@@ -171,51 +168,43 @@ fn big_sum(a:String,b:String)->String
 fn compute_sum(data:&[String])->String
 {
     let mut acc=data[0].to_string();
-    println!("acc:{}",acc);
+    //println!("acc:{}",acc);
     for i in 1..data.len() {
         acc = big_sum(acc, data[i].to_string());
-        println!("acc:{}",acc);
+        //println!("acc:{}",acc);
     }
     acc
 }
 
 
-fn compute(data:&[String])->i32
+fn compute(data:&[String])->i64
 {
     magnitude(compute_sum(data))
 }
 
-pub fn part1(data:&[String])->i32
+pub fn part1(data:&[String])->i64
 {
+    compute(data)
+}
 
-    0
-    /*
-    let yy = tools::get_between(data,"y=","");
-    let x0 = tools::i32_get_between(&xx[..],  "","..");    
-
-
-    let mut pos = 0;
-    let mut depth = 0;
-    
-    for line in data {
-        let cmd : Vec<&str> = line.split(' ').collect();
-        let x   : i32       = cmd[1].parse().unwrap();
-
-        match cmd[0] {
-            "forward" => pos  +=x,
-            "up"      => depth-=x,
-            "down"    => depth+=x,
-            _         => {},
+pub fn part2(data:&[String])->i64
+{
+    let mut res =0;// i64::MIN;
+    for i in 0..data.len()
+    {
+        for j in 0..data.len() 
+        {
+            if i!=j
+            {
+                res = res.max(magnitude(big_sum(data[i].to_string(),data[j].to_string())));
+                res = res.max(magnitude(big_sum(data[j].to_string(),data[i].to_string())));
+            }   
         }
     }
 
-    pos*depth
-     */
-}
-
-pub fn part2(data:&[String])->i32
-{
-    0
+    res
+    
+    
 }
 
 #[allow(unused)]
@@ -321,14 +310,35 @@ fn tests_12()
     assert_eq!(explode("[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]".to_string()),"[[[[0,7],4],[[7,8],[6,0]]],[8,1]]".to_string());
 }
 
-//after addition: [[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]
-//after explode:  [[[[0,7],4],[7,[[8,4],9]]],[1,1]]
-//after explode:  [[[[0,7],4],[15,[0,13]]],[1,1]]
-//after split:    [[[[0,7],4],[[7,8],[0,13]]],[1,1]]
-//after split:    [[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]
-//after explode:  [[[[0,7],4],[[7,8],[6,0]]],[8,1]]
+#[test]
+fn teste_01()
+{
+    assert_eq!(explode("[[[[[9,8],1],2],3],4]".to_string()), "[[[[0,9],2],3],4]".to_string());
+}
 
+#[test]
+fn teste_02()
+{
+    assert_eq!(explode("[7,[6,[5,[4,[3,2]]]]]".to_string()), "[7,[6,[5,[7,0]]]]".to_string());
+}
 
+#[test]
+fn teste_03()
+{
+    assert_eq!(explode("[[6,[5,[4,[3,2]]]],1]".to_string()), "[[6,[5,[7,0]]],3]".to_string());
+}
+
+#[test]
+fn teste_04()
+{
+    assert_eq!(explode("[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]".to_string()), "[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]".to_string());
+}
+
+#[test]
+fn teste_05()
+{
+    assert_eq!(explode("[[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]".to_string()), "[[3,[2,[8,0]]],[9,[5,[7,0]]]]".to_string());
+}
 
 #[test]
 fn testt_13()
@@ -389,4 +399,63 @@ fn test2_2()
 fn test2_3()
 {
     assert_eq!(big_sum("[[[[4,3],4],4],[7,[[8,4],9]]]".to_string(),"[1,1]".to_string()),"[[[[0,7],4],[[7,8],[6,0]]],[8,1]]".to_string());
+}
+
+#[test]
+fn testsi_1()
+{
+    let v = vec![
+        "[1,1]".to_string(),
+        "[2,2]".to_string(),
+        "[3,3]".to_string(),
+        "[4,4]".to_string(),
+    ];
+    assert_eq!(compute_sum(&v),"[[[[1,1],[2,2]],[3,3]],[4,4]]");
+}
+
+#[test]
+fn testsi_2()
+{
+    let v = vec![
+        "[1,1]".to_string(),
+        "[2,2]".to_string(),
+        "[3,3]".to_string(),
+        "[4,4]".to_string(),
+        "[5,5]".to_string(),
+    ];
+    assert_eq!(compute_sum(&v),"[[[[3,0],[5,3]],[4,4]],[5,5]]");
+}
+
+#[test]
+fn testsi_3()
+{
+    let v = vec![
+        "[1,1]".to_string(),
+        "[2,2]".to_string(),
+        "[3,3]".to_string(),
+        "[4,4]".to_string(),
+        "[5,5]".to_string(),
+        "[6,6]".to_string(),
+        ];
+        assert_eq!(compute_sum(&v),"[[[[5,0],[7,4]],[5,5]],[6,6]]");
+}
+
+
+#[test]
+fn test_part2()
+{
+    let v = vec![
+        "[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]".to_string(),
+        "[[[5,[2,8]],4],[5,[[9,9],0]]]".to_string(),
+        "[6,[[[6,2],[5,6]],[[7,6],[4,7]]]]".to_string(),
+        "[[[6,[0,7]],[0,9]],[4,[9,[9,0]]]]".to_string(),
+        "[[[7,[6,4]],[3,[1,3]]],[[[5,5],1],9]]".to_string(),
+        "[[6,[[7,3],[3,2]]],[[[3,8],[5,7]],4]]".to_string(),
+        "[[[[5,4],[7,7]],8],[[8,3],8]]".to_string(),
+        "[[9,3],[[9,9],[6,[4,9]]]]".to_string(),
+        "[[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]]".to_string(),
+        "[[[[5,2],5],[8,[3,7]]],[[5,[7,5]],[4,4]]]".to_string(),
+    ];
+ 
+    assert_eq!(part2(&v),3993);
 }
