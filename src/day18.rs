@@ -8,7 +8,7 @@ fn is_split(s:&str)->bool
     s.replace("[", "")
      .replace("]", "")
      .split(',')
-     .map(|s| s.parse::<i64>().unwrap())
+     .map(|s| s.parse::<i32>().unwrap())
      .any(|n| n>=10)
 }
 
@@ -25,12 +25,12 @@ fn is_explode(s:&str)->Option<(usize,usize)>
                     {
                         let mut c=0;
                         
-                        for (j,cc) in s[i+1..].chars().enumerate()
+                        for (id,cc) in s[i+1..].chars().enumerate()
                         {
-                            if cc==',' {    c+=1; if c>1 { break; }        }
-                            if cc=='[' {                   break;          }
-                            if cc==']' { if c==1 { return Some((i,j+i+1)); }
-                                            else {                  break; } }
+                            if cc==',' {    c+=1; if c>1 { break; }         }
+                            if cc=='[' {                   break;           }
+                            if cc==']' { if c==1 { return Some((i,id+i+1)); }
+                                            else {         break;          }}
                         }
                     }
                     brackets+=1;         
@@ -42,10 +42,11 @@ fn is_explode(s:&str)->Option<(usize,usize)>
     None
 }
 
-fn search_digit(s:&str,id:i64,delta:i64)->Option<usize>
+fn search_digit(s:&str,id:i32,delta:i32)->Option<usize>
 {
     let mut id = id;
-    while id>=0 && id<s.len() as i64
+    
+    while id>=0 && id<s.len() as i32
     {
         if s.chars().nth(id as usize).unwrap().is_digit(10)
         {
@@ -57,23 +58,23 @@ fn search_digit(s:&str,id:i64,delta:i64)->Option<usize>
     None
 }
 
-fn add_number(s:&str,id:usize,value:i64)->String {
+fn add_number(s:&str,id:usize,value:i32)->String {
     
     let b = if id+1<s.len() && s.chars().nth(id+1).unwrap().is_digit(10) { id+1 } else { id };
-    let num = s[id..b+1].to_string().parse::<i64>().unwrap() + value;
+    let num = s[id..b+1].to_string().parse::<i32>().unwrap() + value;
     format!("{}{}{}",&s[..id],num,&s[b+1..])
 }
 
 fn explode(s:&str)->String 
 {
     let (a,b) = is_explode(s).unwrap();
-    let (left,middle,right) = (&s[..a],&s[a+1..b],&s[b+1.. ]);
+    let (left,middle,right) = (&s[..a],&s[a+1..b],&s[b+1..]);
 
     let tab = middle.split(',').collect::<Vec<&str>>();
-    let ln = tab[0].parse::<i64>().unwrap();
-    let rn = tab[1].parse::<i64>().unwrap();
-    let lf = search_digit(left,left.len() as i64-1,-1);
-    let rf = search_digit(right,0         , 1);
+    let ln = tab[0].parse::<i32>().unwrap();
+    let rn = tab[1].parse::<i32>().unwrap();
+    let lf = search_digit(left ,left.len() as i32-1,-1);
+    let rf = search_digit(right,0                  , 1);
     let ll = if lf!=None { add_number(   left,lf.unwrap(),ln) } else { left.to_string() };
     let rr = if rf!=None { add_number(right,rf.unwrap(),rn) } else { right.to_string() };
     format!("{}{}{}",ll,"0",rr)
@@ -114,7 +115,7 @@ fn find_coma(s:&str)->usize
     0
 }
 
-fn magnitude(s:&str)->i64
+fn magnitude(s:&str)->i32
 {
     if s.starts_with('[')
     {
@@ -123,7 +124,7 @@ fn magnitude(s:&str)->i64
     }
       else
     {        
-        s.parse::<i64>().unwrap()
+        s.parse::<i32>().unwrap()
     }
 }
 
@@ -146,19 +147,19 @@ fn compute_sum(data:&[String])->String
         .fold(data[0].to_string(), |acc,c| big_sum(&acc, c))
 }
 
-fn compute(data:&[String])->i64
+fn compute(data:&[String])->i32
 {
     magnitude(&compute_sum(data))
 }
 
-pub fn part1(data:&[String])->i64
+pub fn part1(data:&[String])->i32
 {
     compute(data)
 }
 
-pub fn part2(data:&[String])->i64
+pub fn part2(data:&[String])->i32
 {
-    let mut res = i64::MIN;
+    let mut res = i32::MIN;
 
     for i in data.iter() {
     for j in data.iter() {
@@ -284,19 +285,19 @@ fn teste_05()
 #[test]
 fn testt_13()
 {
-    assert_eq!(is_explode(&"[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]".to_string()),Some((4,8)));
+    assert_eq!(is_explode("[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]"),Some((4,8)));
 }
 
 #[test]
 fn testt_14()
 {
-    assert_eq!(is_explode(&"[[[[0,7],4],[7,[[8,4],9]]],[1,1]]".to_string()),Some((16,20)));
+    assert_eq!(is_explode("[[[[0,7],4],[7,[[8,4],9]]],[1,1]]"),Some((16,20)));
 }
 
 #[test]
 fn testt_15()
 {
-    assert_eq!(is_explode(&"[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]".to_string()),Some((22,26)));
+    assert_eq!(is_explode("[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]"),Some((22,26)));
 }
 
 
