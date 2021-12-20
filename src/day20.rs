@@ -65,10 +65,10 @@ fn enhance(data:&[String],times:usize)->usize
     }
 
     let mut empty = '.';
-    let size = d + (times as i32)/2 + 85;
+    let size = d + (times as i32)/2 + 90;
 
     for _ in 0..times {
-        field = enchance(alg,&field.clone(),size as i32,empty);
+        field = enchance(alg,&field,size as i32,empty);
 
         if empty=='.' { empty='#'; }
                  else { empty='.'; }
