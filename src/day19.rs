@@ -4,12 +4,50 @@ use crate::tools;
 #[derive(Debug,Clone,PartialEq, Eq, PartialOrd, Ord)]
 struct Scanner
 {
-    beams: Vec<(i32,i32,i32)>,
-    id:i32,
-    x:i32,
-    y:i32,
-    z:i32,
-    used:bool,
+    beams : Vec<(i32,i32,i32)>,
+       id : i32,
+        x : i32,
+        y : i32,
+        z : i32,
+     used : bool,
+}
+
+fn inverse_matrix(m:Vec<(i32,i32,i32)>)->Vec<(i32,i32,i32)>
+{
+    let m00:f32 = m[0].0 as f32;
+    let m01:f32 = m[0].1 as f32;
+    let m02:f32 = m[0].2 as f32;
+    let m10:f32 = m[1].0 as f32;
+    let m11:f32 = m[1].1 as f32;
+    let m12:f32 = m[1].2 as f32;
+    let m20:f32 = m[2].0 as f32;
+    let m21:f32 = m[2].1 as f32;
+    let m22:f32 = m[2].2 as f32;
+        
+    let det : f32 = m00 * m11 * m22 - m21 * m12 -
+                    m01 * m10 * m22 - m12 * m20 +
+                    m02 * m10 * m21 - m11 * m20;
+
+    let invdet : f32 = 1.0 / det;
+    
+    let mn00 = (m11 * m22 - m21 * m12) * invdet;
+    let mn01 = (m02 * m21 - m01 * m22) * invdet;
+    let mn02 = (m01 * m12 - m02 * m11) * invdet;
+    let mn10 = (m12 * m20 - m10 * m22) * invdet;
+    let mn11 = (m00 * m22 - m02 * m20) * invdet;
+    let mn12 = (m10 * m02 - m00 * m12) * invdet;
+    let mn20 = (m10 * m21 - m20 * m11) * invdet;
+    let mn21 = (m20 * m01 - m00 * m21) * invdet;
+    let mn22 = (m00 * m11 - m10 * m01) * invdet;
+    
+    vec![(mn00 as i32,mn01 as i32,mn02 as i32),
+         (mn10 as i32,mn11 as i32,mn12 as i32),
+         (mn20 as i32,mn21 as i32,mn22 as i32)]
+}
+
+fn get_inverse_matrix(id:usize)->Vec<(i32,i32,i32)>
+{
+    inverse_matrix(get_view_matrix(id))
 }
 
 //matrices from http://www.euclideanspace.com/maths/algebra/matrix/transforms/examples/index.htm
@@ -125,6 +163,7 @@ impl Scanner
         }
     }
 
+    #[allow(unused)]
     fn min_max_x(&mut self)->(i32,i32)
     {
         let min_x = self.beams.iter().map(|v| v.0).min().unwrap();
@@ -138,6 +177,7 @@ impl Scanner
         (min_x,max_x)
     }
 
+    #[allow(unused)]
     fn common(&self,s:&Scanner)->i32
     {
         let mut h : HashSet<i32> = HashSet::new();
@@ -151,6 +191,7 @@ impl Scanner
         cnt
     }
 
+    #[allow(unused)]
     fn print(&self)
     {
         println!("Scaner {}",self.id);
@@ -204,7 +245,7 @@ fn find(points:&HashSet<(i32,i32,i32)>,b:&Scanner)->(bool,i32,i32,i32,usize)
                         panic!("why?");
                     }
 
-                    if cnt>=best_cnt {
+                    if cnt>best_cnt {
                         best_cnt = cnt;
                         best_x = dx;
                         best_y = dy;
@@ -287,29 +328,27 @@ pub fn part1(data:&[String])->usize
                 for i in 0..24 
                 {
                     let mut m = b.clone();                
-                    m.transform(&get_view_matrix(i));
+                    m.transform(&get_inverse_matrix(i));
                     let (success,dx,dy,dz,count) = find(&points,&m);
 
-                    if success {
-                        if count>best && dx<=1000 && dy<=1000 && dz<=1000
-                        {
-                            best = count;
-                            best_off = (dx,dy,dz);
-                            best_set = m.beams.clone();
-                            win = true;
-                        }
-                    }                
+                    if success && count>best && dx<=1000 && dy<=1000 && dz<=1000
+                    {
+                        best = count;
+                        best_off = (dx,dy,dz);
+                        best_set = m.beams.clone();
+                        win = true;
+                    }                                    
                 }
 
                 //println!("s: {},{},{}",dx,dy,dz);
                 if win 
                 {
-                    println!("p0 --- {}",points.len());
                     b.used = true;
                     add_points(&mut points,&best_set,best_off.0,best_off.1,best_off.2);
                     println!("id {} sca {:?}",b_id,best_off);
-                    println!("{:?}",points);
+                    println!("{:?}",best_set);
                     found+=1;
+                    println!("p0 --- {}",points.len());
                 }
                 else
                 {
@@ -332,7 +371,8 @@ pub fn part1(data:&[String])->usize
 
 pub fn part2(data:&[String])->i32
 {
--1
+    let d = &data[1].parse::<i32>().unwrap();
+    *d
 }
 
 #[allow(unused)]
@@ -344,7 +384,7 @@ pub fn solve(data:&[String])
 }
 
 #[test]
-fn test1()
+fn testr1()
 {
     let v = vec![
         "--- scanner 0 ---".to_string(),
@@ -489,9 +529,89 @@ fn test1()
 }
 
 #[test]
-fn test2()
+fn testr2()
 {
     let v = vec![
     ];
     assert_eq!(part2(&v),900);
 }
+
+#[test]
+fn test_mtx0()
+{
+    assert_eq!(
+    inverse_matrix(vec![( 1, 0, 0),
+                        ( 0, 1, 0),
+                        ( 0, 0, 1)]),
+                   vec![( 1, 0, 0),
+                        ( 0, 1, 0),
+                        ( 0, 0, 1)]
+    );
+}
+
+#[test]
+fn test_mtx1()
+{
+    assert_eq!(
+    inverse_matrix(vec![( 0, 0, 1),
+                        ( 0,-1, 0),
+                        ( 1, 0, 0)]),
+                   vec![( 0, 0, 1),
+                        ( 0,-1, 0),
+                        ( 1, 0, 0)]
+    );
+}
+
+#[test]
+fn test_mtx2()
+{
+    assert_eq!(
+    inverse_matrix(vec![( 0,-1, 0),
+                        ( 0, 0,-1),
+                        ( 1, 0, 0)]),
+                   vec![( 0, 0, 1),
+                        (-1, 0, 0),
+                        ( 0,-1, 0)]
+    );
+}
+
+#[test]
+fn test_mtx3()
+{
+    assert_eq!(
+    inverse_matrix(vec![( 0,-1, 0),
+                        ( 1, 0, 0),
+                        ( 0, 0, 1)]),
+                   vec![( 0, 1, 0),
+                        (-1, 0, 0),
+                        ( 0, 0, 1)]
+    );
+}
+
+#[test]
+fn test_mtx4()
+{
+    assert_eq!(
+    inverse_matrix(vec![( 0,-1, 0),
+                        ( 0, 0, 1),
+                        (-1, 0, 0)]),
+                   vec![( 0, 0,-1),
+                        (-1, 0, 0),
+                        ( 0, 1, 0)]
+    );
+}
+
+
+
+/*
+
+( 0, 0,-1),
+( 0,-1, 0),
+(-1, 0, 0),
+
+
+
+[( 0, 0, 1),
+( 0, 1, 0),
+(-1, 0, 0)],
+ */
