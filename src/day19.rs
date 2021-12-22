@@ -1,4 +1,4 @@
-use std::collections::{HashSet};
+use std::collections::{HashSet,HashMap};
 use crate::tools;
 
 #[derive(Debug,Clone,PartialEq, Eq, PartialOrd, Ord)]
@@ -148,6 +148,59 @@ impl Scanner
         }
     }
 
+    fn dist(p1:(i32,i32,i32),p2:(i32,i32,i32))->i32
+    {
+        (p2.0-p1.0).abs() +
+        (p2.1-p1.1).abs() +
+        (p2.2-p1.2).abs()
+    }
+
+
+    fn get_fingerprint(&self)->HashMap<i32,usize>
+    {
+        let mut r : HashMap<i32,usize> = HashMap::new();
+
+        for a in 0..self.beams.len()
+        {
+            let mut min_d = i32::MAX;
+            let mut min_d1 = i32::MAX;
+            let mut min_d2 = i32::MAX;
+
+            for b in a+1..self.beams.len()
+            {
+                for c in a+1..self.beams.len()
+                {
+                    let d1 = Scanner::dist(self.beams[a],self.beams[b]);
+                    let d2 = Scanner::dist(self.beams[a],self.beams[c]);
+                    
+                    if d1+d2<min_d 
+                    {
+                        min_d  = d1+d2;
+                        min_d1 = d1;
+                        min_d2 = d2;
+                    }
+                }                    
+            }
+            let area= (min_d2<<16) + min_d1;
+            let v = *r.get(&area).unwrap_or(&0) as usize + 1;
+            r.insert(area,v);
+        }
+        r
+    }
+
+    fn set_pos(&mut self,x:i32,y:i32,z:i32)
+    {
+        self.x = x;
+        self.y = y;
+        self.z = z;
+    }
+
+    fn set_points(&mut self,po:&Scanner)
+    {
+        self.beams = po.beams.clone();
+        //scanners[b].set_points(&m);
+    }
+
     fn transform(&mut self,mtx:&[(i32,i32,i32)])
     {
         for p in self.beams.iter_mut() 
@@ -212,7 +265,7 @@ fn add_points(points:&mut HashSet<(i32,i32,i32)>,beams:&[(i32,i32,i32)],dx:i32,d
     }
 }
 
-fn find(points:&HashSet<(i32,i32,i32)>,b:&Scanner)->(bool,i32,i32,i32,usize)
+fn find(points:&HashSet<(i32,i32,i32)>,b:&Scanner,scaner_pos:(i32,i32,i32))->(bool,i32,i32,i32,usize)
 {
     let mut ss = 1;
     let mut best_cnt = 0;
@@ -228,28 +281,40 @@ fn find(points:&HashSet<(i32,i32,i32)>,b:&Scanner)->(bool,i32,i32,i32,usize)
             
                // if dx.abs()<=1000 && dy.abs()<=1000 && dz.abs()<=1000
                 {
-                let cnt = b.beams.iter().filter(|&a| 
-                points.contains(&(a.0+dx,
-                                  a.1+dy,
-                                  a.2+dz))).count();
-
-               // if !b.beams.iter().any(|p| (p.0+dx).abs()>1000 || (p.1+dy).abs()>1000 || (p.2+dz).abs()>1000)
-                
+                    let cnt = b.beams.iter().filter(|&a| 
+                        points.contains(&(a.0+dx,
+                                          a.1+dy,
+                                          a.2+dz))).count();
 
                     if cnt>ss 
                     {
-                        ss= cnt;
-                        println!("<{}>",ss)
-                    }
-                    if cnt<1 {
-                        panic!("why?");
-                    }
+                        let cnt_wrong = b.beams.iter().filter(|&a| 
+                            points.contains(&(a.0+dx,a.1+dy,a.2+dz)) && 
+                                (i32::abs(a.0+dx-p1.0)<=1000) &&
+                                (i32::abs(a.1+dy-p1.1)<=1000) &&
+                                (i32::abs(a.2+dz-p1.2)<=1000)
+                        ).count();
+                            
+                        // if !b.beams.iter().any(|p| (p.0+dx).abs()>1000 || (p.1+dy).abs()>1000 || (p.2+dz).abs()>1000)                
 
-                    if cnt>best_cnt {
-                        best_cnt = cnt;
-                        best_x = dx;
-                        best_y = dy;
-                        best_z = dz;
+                        if cnt_wrong<=12
+                        {
+                            if cnt>ss 
+                            {
+                                ss= cnt;
+                                println!("<{}>",ss)
+                            }
+                            if cnt<1 {
+                                panic!("why?");
+                            }
+
+                            if cnt>best_cnt {
+                                best_cnt = cnt;
+                                best_x = dx;
+                                best_y = dy;
+                                best_z = dz;
+                            }
+                        }
                     }
                 }
 
@@ -273,6 +338,109 @@ fn find(points:&HashSet<(i32,i32,i32)>,b:&Scanner)->(bool,i32,i32,i32,usize)
     }
 
 }
+
+fn find2(a:&Scanner,b:&Scanner,scaner_pos:(i32,i32,i32))->(bool,i32,i32,i32,usize)
+{
+    let mut points: HashSet<(i32,i32,i32)> = HashSet::new();
+
+    for p in a.beams.iter() {
+        points.insert((p.0,p.1,p.2));
+    }
+
+    let scanner1_x = a.x;
+    let scanner1_y = a.y;
+    let scanner1_z = a.z;
+
+    let bc = b.beams.clone();
+    
+    for p1 in points.clone() {
+        for p2 in &b.beams {
+            let dx = p1.0-p2.0;
+            let dy = p1.1-p2.1;
+            let dz = p1.2-p2.2;      
+            
+                if (scanner1_x-dx).abs()<=2000 && 
+                   (scanner1_y-dy).abs()<=2000 && 
+                   (scanner1_z-dz).abs()<=2000 
+                {
+                    let common:Vec<(i32,i32,i32)> = bc.clone().into_iter().filter(|&s|
+                        {
+                            let px = s.0+dx;
+                            let py = s.1+dy;
+                            let pz = s.2+dz;
+
+                            points.contains(&(px,py,pz)) &&
+                            (px-scanner1_x).abs() <=1000 &&
+                            (py-scanner1_y).abs() <=1000 &&
+                            (pz-scanner1_z).abs() <=1000 &&
+                            s.0<=1000 &&
+                            s.1<=1000 &&
+                            s.2<=1000 
+                        }).collect();//::<Vec(i32,i32,i32)>();
+
+                    let cnt = common.len();
+
+                    if cnt>=10
+                    {
+                        /*
+                        let cnt_wrong = b.beams.iter().filter(|&a| 
+                            !points.contains(&(a.0+dx,a.1+dy,a.2+dz)) && 
+                                (i32::abs(a.0+dx-p1.0)<=1000) &&
+                                (i32::abs(a.1+dy-p1.1)<=1000) &&
+                                (i32::abs(a.2+dz-p1.2)<=1000)
+                        ).count(); */
+
+                        //if cnt_wrong==0 
+                        //{
+                        return (true,dx,dy,dz,cnt);
+                        //}
+                    }    
+                        // if !b.beams.iter().any(|p| (p.0+dx).abs()>1000 || (p.1+dy).abs()>1000 || (p.2+dz).abs()>1000)                
+/*
+                        if cnt_wrong<=12
+                        {
+                            if cnt>ss 
+                            {
+                                ss= cnt;
+                                println!("<{}>",ss)
+                            }
+                            if cnt<1 {
+                                panic!("why?");
+                            }
+
+                            if cnt>best_cnt {
+                                best_cnt = cnt;
+                                best_x = dx;
+                                best_y = dy;
+                                best_z = dz;
+                            }
+                        }
+                        */
+                    }
+                }
+
+//                    }
+//                }
+//            }
+
+            //if cnt>1
+            //{
+                //println!("{}",cnt);
+            //}
+            
+     }
+    
+    //if best_cnt>=12
+    //{
+      //  (true,best_x,best_y,best_z,best_cnt)
+    //}
+    //else {
+        (false,0,0,0,0)
+    //}
+
+}
+
+
 
 pub fn part1(data:&[String])->usize
 {
@@ -300,6 +468,74 @@ pub fn part1(data:&[String])->usize
     let mut points = HashSet::new();
     let mut found = 0;
     let mut tick=0;
+
+
+    add_points(&mut points,&scanners[0].beams,0,0,0);
+    scanners[0].used = true;
+    let mut offx = 0;
+    let mut offy = 0;
+    let mut offz = 0;
+
+
+   // let mut hs = HashSet::new();
+/*
+    for f in scanners
+    {
+        let hh = f.get_fingerprint();
+        for f in hh.keys() 
+        {
+            hs.insert(f);
+        }
+    }
+   */  
+    return 0;//hs.len();
+    
+    /*
+    for i in 0..6 {
+        for a in 0..scanners.len()
+        {
+            if scanners[a].used
+            {
+            for b in 0..scanners.len()            
+            {
+                if !scanners[b].used && a!=b
+                {
+                    let aa = &scanners[a];
+                    println!("{} {}",a,b);
+
+                    for i in 0..24 
+                    {
+                        let mut m = scanners[b].clone();                
+                        m.transform(&get_inverse_matrix(i));
+
+                        let res = find2(aa, &m, (aa.x, aa.y, aa.z));
+
+                        if res.0
+                        {
+                            print!("added scaner:{}->{} count={} ",a,b,res.4);
+
+                            add_points(&mut points,&m.beams,res.1,res.2,res.3);
+                            scanners[b].x =  offx +res.1;
+                            scanners[b].y =  offy +res.2;
+                            scanners[b].z =  offz +res.3;
+
+                            println!("at pos {},{},{}",scanners[b].x,scanners[b].y,scanners[b].z);
+
+                            scanners[b].set_points(&m);
+                            offx += res.1;
+                            offy += res.2;
+                            offz += res.3;
+                            scanners[b].used = true;
+                            break;
+                        }    
+                    }
+                }
+            }
+        }
+        }
+    }
+ */
+    /*
     
     while found<scanners.len()
     {
@@ -310,7 +546,7 @@ pub fn part1(data:&[String])->usize
                                                   .filter(|s|!s.used)
                                                   .enumerate()
         {
-            println!("{}",b_id);
+            //println!("{}",b_id);
             if points.is_empty()
             {
                 add_points(&mut points,&b.beams,0,0,0);
@@ -329,7 +565,7 @@ pub fn part1(data:&[String])->usize
                 {
                     let mut m = b.clone();                
                     m.transform(&get_inverse_matrix(i));
-                    let (success,dx,dy,dz,count) = find(&points,&m);
+                    let (success,dx,dy,dz,count) = find(&points,&m,(0,0,0));
 
                     if success && count>best && dx<=1000 && dy<=1000 && dz<=1000
                     {
@@ -346,19 +582,21 @@ pub fn part1(data:&[String])->usize
                     b.used = true;
                     add_points(&mut points,&best_set,best_off.0,best_off.1,best_off.2);
                     println!("id {} sca {:?}",b_id,best_off);
+                    scanners[b_id].set_pos(best_off.0,best_off.1,best_off.2);
                     println!("{:?}",best_set);
                     found+=1;
                     println!("p0 --- {}",points.len());
                 }
                 else
                 {
-                    println!("{} fail",b_id);
+                    print!(".");//{} fail",b_id);
                 }
             }
             //b.min_max_x();
             //b.print();
         }
     }
+    */
     //for (ai,a) in scanners.iter().enumerate() {
     //    for (bi,b) in scanners.iter().enumerate() {
     //        if a!=b {
@@ -366,7 +604,7 @@ pub fn part1(data:&[String])->usize
     //        }
     //    }        
     //}
-    points.len()
+    //points.len()
 }
 
 pub fn part2(data:&[String])->i32
@@ -523,8 +761,7 @@ fn testr1()
         "891,-625,532".to_string(),
         "-652,-548,-490".to_string(),
         "30,-46,-14".to_string(),
-        "".to_string(),
-    ];
+        ];
     assert_eq!(part1(&v),79);
 }
 
