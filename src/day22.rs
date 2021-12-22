@@ -1,119 +1,203 @@
 use crate::tools;
 use std::collections::HashMap;
 
-fn count3d(hash:&HashMap<(i32,i32,i32),bool>,x:i32,y:i32,z:i32)->i32
+fn count3d(hash:&HashMap<(i32,i32,i32),bool>)->i64
 {
     let mut cnt=0;
     
-    for zz in -50..=50 {
-    for yy in -50..=50 {
-    for xx in -50..=50 {
-        //if xx!=0 || yy!=0 || zz!=0 
-        {
-            if *hash.get(&(x+xx,y+yy,z+zz)).unwrap_or(&false)
-            {
-                cnt+=1;
-            }
-        }
+    for z in -50..=50 {
+    for y in -50..=50 {
+    for x in -50..=50 {
+        if *hash.get(&(x,y,z)).unwrap_or(&false) { cnt+=1; }
     }}}
 
     cnt
 }
 
-
-
-fn simulate3d(next:&mut HashMap<(i32,i32,i32),bool>,x0:i32,x1:i32,y0:i32,y1:i32,z0:i32,z1:i32,v:bool)
+#[derive(Debug)]
+struct Box
 {
-    let mut x0 = x0;
-    let mut y0 = y0;
-    let mut z0 = z0;
-    let mut x1 = x1;
-    let mut y1 = y1;
-    let mut z1 = z1;
-    if x0< -50 {x0=-50;}
-    if y0< -50 {y0=-50;}
-    if z0< -50 {z0=-50;}
-    if x1>  50 {x1= 50;}
-    if y1>  50 {y1= 50;}
-    if z1>  50 {z1= 50;}
+    on : bool,
+    x0 : i32,
+    x1 : i32,
+    y0 : i32,
+    y1 : i32,
+    z0 : i32,
+    z1 : i32,
+}
 
-
-    let (px,py,pz) = (0,0,0);
-    for zz in z0..=z1 {
-    for yy in y0..=y1 {
-    for xx in x0..=x1 
+impl Box 
+{
+    fn new(on:bool,x0:i32,x1:i32,y0:i32,y1:i32,z0:i32,z1:i32)->Self
     {
-        let newp = (px+xx,py+yy,pz+zz);           
-        next.insert(newp, v);            
+        Self
+        {
+            on,x0,x1,y0,y1,z0,z1
+        }
+    }
+
+    fn inside(&self,x:i32,y:i32,z:i32)->bool
+    {
+        x>=self.x0 && y>=self.y0 && z>=self.z0 && x<=self.x1 && y<=self.y1 && z<=self.z1
+    }
+}
+
+fn simulate3d(next:&mut HashMap<(i32,i32,i32),bool>,b:&Box)
+{
+    let x0 = b.x0.max(-50);
+    let y0 = b.y0.max(-50);
+    let z0 = b.z0.max(-50);
+    let x1 = b.x1.min( 50);
+    let y1 = b.y1.min( 50);
+    let z1 = b.z1.min( 50);
+    
+    for z in z0..=z1 {
+    for y in y0..=y1 {
+    for x in x0..=x1 {        
+        next.insert((x,y,z), b.on);            
     }}}
-    
 }
 
-
-
-pub fn solve1(data:&[String])->i32
+fn parse_data(data:&[String])->Vec<Box>
 {
-//    on x=-22..26,y=-27..20,z=-29..19
-//    off x=-48..-32,y=26..41,z=-47..-37    
+    data.iter().map(|d|
+        {
+            let tab : Vec<&str> = d.split(',').collect();        
+            let ok = d.contains("on");
+            let x0: i32 = tools::i32_get_between(&tab[0],"x=","..");
+            let x1: i32 = tools::i32_get_between(&tab[0],"..", "");
+            let y0: i32 = tools::i32_get_between(&tab[1],"y=","..");
+            let y1: i32 = tools::i32_get_between(&tab[1],"..", "");
+            let z0: i32 = tools::i32_get_between(&tab[2],"z=","..");
+            let z1: i32 = tools::i32_get_between(&tab[2],"..", "");
+            Box::new(ok,x0,x1,y0,y1,z0,z1)
+        }
+    ).collect()
+}
+
+pub fn solve1(data:&[String])->i64
+{
     let mut field  = HashMap::new();
+    let boxes = parse_data(data);
 
-    for d in data {
-        let tt:Vec<&str> = d.split(',').collect();        
-        let ok = d.contains("on");
-        let x0: i32 = tools::i32_get_between(&tt[0],"=","..");
-        let x1: i32 = tools::i32_get_between(&tt[0],"..", "");
-        let y0: i32 = tools::i32_get_between(&tt[1],"=","..");
-        let y1: i32 = tools::i32_get_between(&tt[1],"..", "");
-        let z0: i32 = tools::i32_get_between(&tt[2],"=","..");
-        let z1: i32 = tools::i32_get_between(&tt[2],"..", "");
-
-        
-        println!("{}",ok);
-        println!("x {}..{}",x0,x1);
-        println!("y {}..{}",y0,y1);
-        println!("z {}..{}",z0,z1);
-        simulate3d(&mut field, x0, x1, y0, y1, z0, z1, ok);
-    }
-    
-    //field.values().map(|f| if *f {1} else {0}).sum()
-
-    count3d(&field,0,0,0)
-    
-}
-
-pub fn solve2(data:&Vec<String>)->i32
-{
-    /*
-    let mut next:HashMap<(i32,i32,i32,i32),bool> = HashMap::new();
-   
-    for (y,l) in data.iter().enumerate() {
-    for (x,c) in l.chars().enumerate()
-    {            
-        if c=='#' { next.insert((x as i32,y as i32,0,0),true); }        
-    }}
-
-    for _ in 0..6
+    for b in boxes 
     {
-        simulate4d(&next.clone(),&mut next);    
-        next = next.into_iter().filter(|x| x.1).collect();
+        simulate3d(&mut field,&b);
     }
 
-    next.len() as i32 
-     */
-    0
+    count3d(&field)    
 }
 
+fn get_xes(boxes:&Vec<Box>,id:char)->Vec<i32>
+{
+    boxes.iter()
+         .map(|e| 
+            match id {
+                'x' => [e.x0,e.x1],
+                'y' => [e.y0,e.y1],
+                'z' => [e.z0,e.z1],
+                 _  => panic!("wrong code"),
+            }              
+         )
+         .flatten()
+         .collect()
+}
 
+//1           5        7           10
+//1   (2,4)   5    6   7    (8,9)  10
+//1,1  2,3    5,1  6,1 7,1   8,2   10,1
 
+fn get_span(res:&Vec<i32>)->Vec<(i32,i32)>
+{
+    res.iter()
+       .enumerate()
+       .map( |(id,&e)|
+        if id+1<res.len()
+        {
+            let    n = res[id+1];
+            let diff = n - e;
 
-pub fn part1(data:&[String])->i32
+            if diff>=2
+            {
+                vec![(e,1),(e+1,diff-1)]
+            }
+              else 
+            {
+                vec![(e,1),(e+1,1)]
+            }
+        }
+        else
+        {
+            vec![(e,1)]
+        }
+       )       
+       .flatten()
+       .collect::<Vec<(i32,i32)>>()
+}
+
+fn get_points(boxes:&Vec<Box>,id:char)->Vec<(i32,i32)>
+{
+    let mut res= get_xes(boxes, id);
+    res.sort();
+    res.dedup();
+
+    get_span(&res)
+}
+
+pub fn solve2(data:&[String])->i64
+{
+    let mut field  = HashMap::new();
+    field.reserve(1000000);
+    let boxes = parse_data(data);
+    //println!("boxes {:?}",boxes);
+    let xx = get_points(&boxes,'x');
+    let yy = get_points(&boxes,'y');
+    let zz = get_points(&boxes,'z');
+    println!("{:?}",xx);
+
+    let mut ii=0;
+    for x in xx.iter() 
+    {
+        println!("{:?}..{}",ii,xx.len());
+        ii+=1;
+
+        for y in yy.iter() {
+        for z in zz.iter() {
+            let area = x.1 as i64*y.1 as i64*z.1 as i64;
+            field.insert((x.0,y.0,z.0), (area,false));
+        }}
+    }
+
+    println!("go");
+
+    {
+        let keys : Vec<(i32,i32,i32)> = field.keys().into_iter().map(|p|
+            *p
+        ).collect();
+
+        for b in boxes 
+        {
+            for v in keys.iter()
+            {    
+                if b.inside(v.0,v.1,v.2)
+                {
+                    field.insert(*v, (field.get(v).unwrap().0,b.on));
+                }
+            }
+        }
+    }
+    
+    field.values().into_iter().map(|(area,on)| area*(*on as i64)).sum()
+}
+
+pub fn part1(data:&[String])->i64
 {
     solve1(&data)
 }
 
-pub fn part2(data:&[String])->i32
+pub fn part2(data:&[String])->i64
 {
-0
+    solve2(&data)
 }
 
 #[allow(unused)]
@@ -218,6 +302,41 @@ fn test2()
         "off x=-70369..-16548,y=22648..78696,z=-1892..86821".to_string(),
         "on x=-53470..21291,y=-120233..-33476,z=-44150..38147".to_string(),
         "off x=-93533..-4276,y=-16170..68771,z=-104985..-24507".to_string(),
-            ];
+        ];
     assert_eq!(part2(&v),2758514936282235);
+}
+
+
+#[test]
+fn test3()
+{
+    let v = vec![
+        "on x=-20..26,y=-36..17,z=-47..7".to_string(),
+        "on x=-20..33,y=-21..23,z=-26..28".to_string(),
+        "on x=-22..28,y=-29..23,z=-38..16".to_string(),
+        "on x=-46..7,y=-6..46,z=-50..-1".to_string(),
+        "on x=-49..1,y=-3..46,z=-24..28".to_string(),
+        "on x=2..47,y=-22..22,z=-23..27".to_string(),
+        "on x=-27..23,y=-28..26,z=-21..29".to_string(),
+        "on x=-39..5,y=-6..47,z=-3..44".to_string(),
+        "on x=-30..21,y=-8..43,z=-13..34".to_string(),
+        "on x=-22..26,y=-27..20,z=-29..19".to_string(),
+        "off x=-48..-32,y=26..41,z=-47..-37".to_string(),
+        "on x=-12..35,y=6..50,z=-50..-2".to_string(),
+        "off x=-48..-32,y=-32..-16,z=-15..-5".to_string(),
+        "on x=-18..26,y=-33..15,z=-7..46".to_string(),
+        "off x=-40..-22,y=-38..-28,z=23..41".to_string(),
+        "on x=-16..35,y=-41..10,z=-47..6".to_string(),
+        "off x=-32..-23,y=11..30,z=-14..3".to_string(),
+        "on x=-49..-5,y=-3..45,z=-29..18".to_string(),
+        "off x=18..30,y=-20..-8,z=-3..13".to_string(),
+        "on x=-41..9,y=-7..43,z=-33..15".to_string(),
+        "on x=-54112..-39298,y=-85059..-49293,z=-27449..7877".to_string(),
+        "on x=967..23432,y=45373..81175,z=27513..53682".to_string(),
+    ];
+
+    let ss = get_span(&vec![1,5,7,10]);
+    println!("span: {:?}",ss);
+    
+    assert_eq!(part2(&v),590784);
 }
