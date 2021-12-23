@@ -171,9 +171,9 @@ impl Scanner
     fn get_xyz(x:i32,y:i32,z:i32,t:i32)->i32
     {
         match t {
-            1 =>  x,
-            2 =>  y,
-            3 =>  z,
+             1 =>  x,
+             2 =>  y,
+             3 =>  z,
             -1 => -x,
             -2 => -y,
             -3 => -z,
@@ -193,6 +193,8 @@ impl Scanner
 
     fn transform(&mut self,tr: &Vec<(i32,i32,i32)>)
     {        
+        self.all_points = vec![];
+
         for t in tr {
             let np = self.beams.iter().map(
                 |p|  Scanner::get_point(p.0,p.1,p.2,*t)
@@ -202,9 +204,12 @@ impl Scanner
         }
     }
 
-    fn claim_found(&mut self,transform:usize)
+    fn claim_found(&mut self,transform:usize,new_points:&Vec<(i32,i32,i32)>,dx:i32,dy:i32,dz:i32)
     {
-        self.points = self.all_points[transform].clone();
+        self.points = new_points.iter().map(|p| (p.0+dx,p.1+dy,p.2+dz) ).collect();
+        self.x = dx;
+        self.y = dy;
+        self.z = dz;
         self.used = true;
     }
 
@@ -212,7 +217,8 @@ impl Scanner
     {
         //println!("scaner: {},{},{}",self.x,self.y,self.z);
 
-        let points = self.points.iter().map(|p| (p.0+self.x,p.1+self.y,p.2+self.z)).collect::<Vec<(i32,i32,i32)>>();
+//        let points = self.points.iter().map(|p| (p.0+self.x,p.1+self.y,p.2+self.z)).collect::<Vec<(i32,i32,i32)>>();
+        let points = self.points.iter().map(|p| (p.0,p.1,p.2)).collect::<Vec<(i32,i32,i32)>>();
 
         for p1 in  self.points.iter() {
             for p2 in s2_points {
@@ -272,6 +278,7 @@ impl Scanner
         &self.all_points[id]
     }
 
+    /*
     fn get_fingerprint(&self)->HashMap<i32,usize>
     {
         let mut r : HashMap<i32,usize> = HashMap::new();
@@ -303,7 +310,7 @@ impl Scanner
         }
         r
     }
-
+ 
     fn set_pos(&mut self,x:i32,y:i32,z:i32)
     {
         self.x = x;
@@ -316,6 +323,7 @@ impl Scanner
         self.beams = po.beams.clone();
         //scanners[b].set_points(&m);
     }
+    */
 /*
     fn transform(&mut self,mtx:&[(i32,i32,i32)])
     {
@@ -583,8 +591,9 @@ fn gen_transforms()->Vec<(i32,i32,i32)>
         }
     }}}}
 
-    println!("{:?}",res);
-    println!("tr count {:#?}",res.len());
+//    res
+    //println!("{:?}",res);
+    //println!("tr count {:#?}",res.len());
     res.into_iter()
        .map(|a| a)
        .collect()
@@ -615,48 +624,68 @@ pub fn part1(data:&[String])->usize
     }
     
     //427 too high
+    //67 wrong
     let tr = gen_transforms();
+    let mut final_points = HashSet::new();
 
+    println!("tr:{:?}",tr);
 
     for f in scanners.iter_mut()
     {
         f.transform(&tr);
         //println!("{}",f.all_points.len());
     }
-    scanners[0].claim_found(0);
 
-    for a_id in 0..scanners.iter() {
-        for (scanner_id,b) in scanners.iter().enumerate() {
-            if !b.used
-            {
-                for id in 0..48 {
-                    let res = scanners[0].match_points(b.get_points(id));
-                    //println!("res= {:?}",res);
-                    if res.0
-                    {
-                        println!("{}: {},{},{}",scanner_id,res.1,res.2,res.3);
-                        scanners[a_id].claim_found(id,res.1,res.2,res.3);
-                        break;
-                    }   
-                }
-            }
+    println!("pp:{}",scanners[0].all_points.len());
+    let s0_points = scanners[0].get_points(0).clone();
+
+    scanners[0].claim_found(0,&s0_points,0,0,0);
+    add_points(&mut final_points,&scanners[0].points,0,0,0);
+
+    let mut found = true;
+    let sca_len = scanners.len();
+
+    while found
+    {
+        found = false;
         
-            //match_points(&self,s2_points:&Vec<(i32,i32,i32)>)->(bool,i32,i32,i32)
-        }   
+        for a_id in 0..sca_len 
+        {
+            let sc = scanners.clone();
+            for (scanner_id,b) in scanners.iter_mut().enumerate() 
+            {
+                if a_id!=scanner_id && !b.used
+                {
+                    for id in 0..48 
+                    {
+                        let new_points = b.get_points(id).clone();
+                        let res = sc.clone()[a_id].match_points(&new_points);
+                        //println!("res= {:?}",res);
+    
+                        if res.0
+                        {
+                            println!("{}->{}: rot={}  point={},{},{}",a_id,scanner_id,id,res.1,res.2,res.3);
+                            b.claim_found(id,&new_points,res.1,res.2,res.3);
+    
+                            add_points(&mut final_points,&b.points,0,0,0);
+                            found = true;
+    
+                            break;
+                        }   
+                        if found {break;}
+                    }                    
+                }
+                if found {break;}            
+                //match_points(&self,s2_points:&Vec<(i32,i32,i32)>)->(bool,i32,i32,i32)
+            }   
+            if found {break;}
+        }
+        println!("loop");
     }
 
 
-    //
-
-    
-
-    let mut points = HashSet::new();
-    let mut found = 0;
-    let mut tick=0;
-
-
-    add_points(&mut points,&scanners[0].beams,0,0,0);
-    scanners[0].used = true;
+    //scanners[0].used = true;
+    /* 
     let mut offx = 0;
     let mut offy = 0;
     let mut offz = 0;
@@ -672,8 +701,8 @@ pub fn part1(data:&[String])->usize
             hs.insert(*f);
         }
     }
-
-    return hs.len();
+*/
+    return final_points.len();
     
     /*
     for i in 0..6 {
@@ -794,8 +823,7 @@ pub fn part1(data:&[String])->usize
 
 pub fn part2(data:&[String])->i32
 {
-    let d = &data[1].parse::<i32>().unwrap();
-    *d
+    0
 }
 
 #[allow(unused)]
