@@ -4,12 +4,15 @@ use crate::tools;
 #[derive(Debug,Clone,PartialEq, Eq, PartialOrd, Ord)]
 struct Scanner
 {
-    beams : Vec<(i32,i32,i32)>,
-       id : i32,
-        x : i32,
-        y : i32,
-        z : i32,
-     used : bool,
+          beams : Vec<(i32,i32,i32)>,
+             id : i32,
+              x : i32,
+              y : i32,
+              z : i32,
+          trans : i32,
+           used : bool,
+         points : Vec<(i32,i32,i32)>,
+     all_points : Vec<Vec<(i32,i32,i32)>>
 }
 
 fn inverse_matrix(m:Vec<(i32,i32,i32)>)->Vec<(i32,i32,i32)>
@@ -143,8 +146,11 @@ impl Scanner
         Self {
             id,
             beams: Vec::new(),
-            x:0,y:0,z:0,
-            used:false
+            x:0, y:0, z:0,
+            used : false,
+            trans : -1,
+            points: Vec::new(),
+            all_points: Vec::new(),
         }
     }
 
@@ -155,6 +161,116 @@ impl Scanner
         (p2.2-p1.2).abs()
     }
 
+    fn dist_ok(p1:(i32,i32,i32),p2:(i32,i32,i32))->bool
+    {
+        (p2.0-p1.0).abs()<=1000 &&
+        (p2.1-p1.1).abs()<=1000 &&
+        (p2.2-p1.2).abs()<=1000
+    }
+
+    fn get_xyz(x:i32,y:i32,z:i32,t:i32)->i32
+    {
+        match t {
+            1 =>  x,
+            2 =>  y,
+            3 =>  z,
+            -1 => -x,
+            -2 => -y,
+            -3 => -z,
+            _  => panic!("eee")
+        }
+    }
+
+    fn get_point(x:i32,y:i32,z:i32,transform:(i32,i32,i32))->(i32,i32,i32)
+    {    
+        (
+            Scanner::get_xyz(x,y,z,transform.0),
+            Scanner::get_xyz(x,y,z,transform.1),
+            Scanner::get_xyz(x,y,z,transform.2)
+        )
+    }
+
+
+    fn transform(&mut self,tr: &Vec<(i32,i32,i32)>)
+    {        
+        for t in tr {
+            let np = self.beams.iter().map(
+                |p|  Scanner::get_point(p.0,p.1,p.2,*t)
+              ).collect();
+
+              self.all_points.push(np);      
+        }
+    }
+
+    fn claim_found(&mut self,transform:usize)
+    {
+        self.points = self.all_points[transform].clone();
+        self.used = true;
+    }
+
+    fn match_points(&self,s2_points:&Vec<(i32,i32,i32)>)->(bool,i32,i32,i32)
+    {
+        //println!("scaner: {},{},{}",self.x,self.y,self.z);
+
+        let points = self.points.iter().map(|p| (p.0+self.x,p.1+self.y,p.2+self.z)).collect::<Vec<(i32,i32,i32)>>();
+
+        for p1 in  self.points.iter() {
+            for p2 in s2_points {
+                let dx = p1.0 - p2.0;
+                let dy = p1.1 - p2.1;
+                let dz = p1.2 - p2.2;
+
+                let visible_from_s2 = points.iter().filter(|&p| 
+                    Scanner::dist_ok( (p.0,p.1,p.2),(dx,dy,dz))
+                )
+                .map(|p| *p)
+                .collect::<Vec<(i32,i32,i32)>>();
+
+                if visible_from_s2.len()<12 { continue; }
+
+                let visible_from_s1 = s2_points.iter().filter(|&p| 
+                    Scanner::dist_ok( (p.0+dx,p.1+dy,p.2+dz),(0,0,0))
+                )
+                .map(|p| *p)
+                .collect::<Vec<(i32,i32,i32)>>();
+        
+                if visible_from_s1.len()<12 { continue; }
+        
+                let mut all = HashSet::new();
+
+              //  println!("hello");
+
+                for s1 in visible_from_s1.clone().into_iter() {
+                    let xx = s1.0+dx;
+                    let yy = s1.1+dy;
+                    let zz = s1.2+dz;
+                    all.insert((xx,yy,zz));
+                }
+
+                let mut found = 0;//self.beams.iter().filter(|p1| true).collect().len();
+
+                for s2 in visible_from_s2 {
+                    if all.contains(&(s2.0,s2.1,s2.2))
+                    {
+                        found+=1;
+                    }
+                }
+                
+                if found>1
+                {
+                    //println!("found:{}",found);
+                }
+                
+
+                if found>=12 { return (true,dx,dy,dz); }
+            }
+        }
+        (false,0,0,0)
+    }
+    
+    fn get_points(&self,id:usize)->&Vec<(i32,i32,i32)> {
+        &self.all_points[id]
+    }
 
     fn get_fingerprint(&self)->HashMap<i32,usize>
     {
@@ -200,22 +316,22 @@ impl Scanner
         self.beams = po.beams.clone();
         //scanners[b].set_points(&m);
     }
-
+/*
     fn transform(&mut self,mtx:&[(i32,i32,i32)])
     {
         for p in self.beams.iter_mut() 
         {
-//            let x = p.0*mtx[0].0 + p.1*mtx[0].1 + p.2*mtx[0].2;
-//            let y = p.0*mtx[1].0 + p.1*mtx[1].1 + p.2*mtx[1].2;
-//            let z = p.0*mtx[2].0 + p.1*mtx[2].1 + p.2*mtx[2].2;
-            let x = p.0*mtx[0].0 + p.0*mtx[1].0 + p.0*mtx[2].0;
-            let y = p.1*mtx[0].1 + p.1*mtx[1].1 + p.1*mtx[2].1;
-            let z = p.2*mtx[0].2 + p.2*mtx[1].2 + p.2*mtx[2].2;
+            let x = p.0*mtx[0].0 + p.1*mtx[0].1 + p.2*mtx[0].2;
+            let y = p.0*mtx[1].0 + p.1*mtx[1].1 + p.2*mtx[1].2;
+            let z = p.0*mtx[2].0 + p.1*mtx[2].1 + p.2*mtx[2].2;
+//            let x = p.0*mtx[0].0 + p.0*mtx[1].0 + p.0*mtx[2].0;
+//            let y = p.1*mtx[0].1 + p.1*mtx[1].1 + p.1*mtx[2].1;
+//            let z = p.2*mtx[0].2 + p.2*mtx[1].2 + p.2*mtx[2].2;
 
             *p = (x,y,z);
         }
     }
-
+ */
     #[allow(unused)]
     fn min_max_x(&mut self)->(i32,i32)
     {
@@ -440,6 +556,39 @@ fn find2(a:&Scanner,b:&Scanner,scaner_pos:(i32,i32,i32))->(bool,i32,i32,i32,usiz
 
 }
 
+fn gen_transforms()->Vec<(i32,i32,i32)>
+{
+    let mut res = HashSet::new();
+    
+    for signs in 0..8 {
+    for x_pos in 0..3 {
+    for y_pos in 0..3 {
+    for z_pos in 0..3 {
+        if x_pos!=y_pos && 
+           y_pos!=z_pos && 
+           x_pos!=z_pos {
+            let mut x = x_pos+1;
+            let mut y = y_pos+1;
+            let mut z = z_pos+1;
+            if signs&1!=0 { x*=-1; }
+            if signs&2!=0 { y*=-1; }
+            if signs&4!=0 { z*=-1; }
+            res.insert((x,y,z));
+
+            if x==1 && y==2 && z==3 {
+                //println!("neutral:{}",res.len()-1);
+            }
+            //println!("[{},{},{}]",x,y,z);
+
+        }
+    }}}}
+
+    println!("{:?}",res);
+    println!("tr count {:#?}",res.len());
+    res.into_iter()
+       .map(|a| a)
+       .collect()
+}
 
 
 pub fn part1(data:&[String])->usize
@@ -464,6 +613,42 @@ pub fn part1(data:&[String])->usize
             s.beams.push((x,y,z));
         }
     }
+    
+    //427 too high
+    let tr = gen_transforms();
+
+
+    for f in scanners.iter_mut()
+    {
+        f.transform(&tr);
+        //println!("{}",f.all_points.len());
+    }
+    scanners[0].claim_found(0);
+
+    for a_id in 0..scanners.iter() {
+        for (scanner_id,b) in scanners.iter().enumerate() {
+            if !b.used
+            {
+                for id in 0..48 {
+                    let res = scanners[0].match_points(b.get_points(id));
+                    //println!("res= {:?}",res);
+                    if res.0
+                    {
+                        println!("{}: {},{},{}",scanner_id,res.1,res.2,res.3);
+                        scanners[a_id].claim_found(id,res.1,res.2,res.3);
+                        break;
+                    }   
+                }
+            }
+        
+            //match_points(&self,s2_points:&Vec<(i32,i32,i32)>)->(bool,i32,i32,i32)
+        }   
+    }
+
+
+    //
+
+    
 
     let mut points = HashSet::new();
     let mut found = 0;
@@ -477,18 +662,18 @@ pub fn part1(data:&[String])->usize
     let mut offz = 0;
 
 
-   // let mut hs = HashSet::new();
-/*
+    let mut hs = HashSet::new();
+
     for f in scanners
     {
         let hh = f.get_fingerprint();
-        for f in hh.keys() 
+        for f in hh.keys().into_iter() 
         {
-            hs.insert(f);
+            hs.insert(*f);
         }
     }
-   */  
-    return 0;//hs.len();
+
+    return hs.len();
     
     /*
     for i in 0..6 {

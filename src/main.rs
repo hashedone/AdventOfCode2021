@@ -23,7 +23,7 @@ mod day19;
 mod day20;
 mod day21;
 mod day22;
-//mod day23;
+mod day23;
 //mod day24;
 //mod day25;
 
@@ -139,11 +139,11 @@ fn main() {
 //        day18::solve(&day18_data);
 //    }
 //
-//    {
-//        let _timer = Timer::new();
-//        let day19_data  = tools::read_1d_string("data/day19.txt");
-//        day19::solve(&day19_data);
-//    }
+    {
+        let _timer = Timer::new();
+        let day19_data  = tools::read_1d_string("data/day19.txt");
+        day19::solve(&day19_data);
+    }
 //
 //    {
 //        let _timer = Timer::new();
@@ -157,11 +157,11 @@ fn main() {
 //        day21::solve(&day21_data);
 //    }
 //
-    {
-        let _timer = Timer::new();
-        let day22_data  = tools::read_1d_string("data/day22.txt");
-        day22::solve(&day22_data);
-    }
+//    {
+//        let _timer = Timer::new();
+//        let day22_data  = tools::read_1d_string("data/day22.txt");
+//        day22::solve(&day22_data);
+//    }
 //
 //    {
 //        let _timer = Timer::new();
