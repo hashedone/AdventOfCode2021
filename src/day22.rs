@@ -38,7 +38,8 @@ impl Box
 
     fn inside(&self,x:i32,y:i32,z:i32)->bool
     {
-        x>=self.x0 && y>=self.y0 && z>=self.z0 && x<=self.x1 && y<=self.y1 && z<=self.z1
+        x>=self.x0 && y>=self.y0 && z>=self.z0 && 
+        x<=self.x1 && y<=self.y1 && z<=self.z1
     }
 }
 
@@ -103,10 +104,6 @@ fn get_xes(boxes:&Vec<Box>,id:char)->Vec<i32>
          .collect()
 }
 
-//1           5        7           10
-//1   (2,4)   5    6   7    (8,9)  10
-//1,1  2,3    5,1  6,1 7,1   8,2   10,1
-
 fn get_span(res:&Vec<i32>)->Vec<(i32,i32)>
 {
     res.iter()
@@ -121,7 +118,11 @@ fn get_span(res:&Vec<i32>)->Vec<(i32,i32)>
             {
                 vec![(e,1),(e+1,diff-1)]
             }
-              else 
+            else if diff==1
+            {
+                vec![(e,1)]
+            }
+            else
             {
                 vec![(e,1),(e+1,1)]
             }
@@ -144,50 +145,82 @@ fn get_points(boxes:&Vec<Box>,id:char)->Vec<(i32,i32)>
     get_span(&res)
 }
 
-pub fn solve2(data:&[String])->i64
+pub fn solve2ok(data:&[String])->i64
 {
     let mut field  = HashMap::new();
-    field.reserve(1000000);
+
     let boxes = parse_data(data);
-    //println!("boxes {:?}",boxes);
     let xx = get_points(&boxes,'x');
     let yy = get_points(&boxes,'y');
     let zz = get_points(&boxes,'z');
-    println!("{:?}",xx);
 
-    let mut ii=0;
-    for x in xx.iter() 
-    {
-        println!("{:?}..{}",ii,xx.len());
-        ii+=1;
-
-        for y in yy.iter() {
+    for x in xx.iter() {
+      for y in yy.iter() {
         for z in zz.iter() {
             let area = x.1 as i64*y.1 as i64*z.1 as i64;
             field.insert((x.0,y.0,z.0), (area,false));
         }}
     }
+    
+    let keys : Vec<(i32,i32,i32)> = field.keys().into_iter().map(|p| *p).collect();
 
-    println!("go");
-
+    for b in boxes 
     {
-        let keys : Vec<(i32,i32,i32)> = field.keys().into_iter().map(|p|
-            *p
-        ).collect();
-
-        for b in boxes 
-        {
-            for v in keys.iter()
-            {    
-                if b.inside(v.0,v.1,v.2)
-                {
-                    field.insert(*v, (field.get(v).unwrap().0,b.on));
-                }
+        for v in keys.iter()
+        {    
+            if b.inside(v.0,v.1,v.2)
+            {
+                field.insert(*v, (field.get(v).unwrap().0,b.on));
             }
         }
     }
     
     field.values().into_iter().map(|(area,on)| area*(*on as i64)).sum()
+}
+
+fn compute2(x:&(i32,i32),boxes:&Vec<Box>,yy:&Vec<(i32,i32)>,zz:&Vec<(i32,i32)>)->i64
+{
+    let mut field  = HashMap::new();
+
+    for y in yy.iter() {
+    for z in zz.iter() {
+        let area = (x.1 as i64)*(y.1 as i64)*(z.1 as i64);
+        field.insert((x.0,y.0,z.0), (area,false));
+    }}
+
+    let keys : Vec<(i32,i32,i32)> = field.keys().into_iter().map(|p| *p).collect();
+
+    let mut sum : i64 = 0;
+
+
+    for v in keys.iter()
+    {    
+        let mut val = false;
+        for bb in boxes
+        {
+            if bb.inside(v.0,v.1,v.2) {  val = bb.on; }
+        }
+        let area = field.get(v).unwrap().0;
+        field.insert(*v, (area,val));
+        if val { sum+=area; }
+    }
+
+    sum
+}
+
+//Day22
+//part1:587097
+//part2:1359673068597669
+//Elapsed: 4060.153 secs
+
+pub fn solve2(data:&[String])->i64
+{
+    let boxes    = parse_data(data);
+    let xx = get_points(&boxes,'x');
+    let yy = get_points(&boxes,'y');
+    let zz = get_points(&boxes,'z');
+
+    xx.iter().map(|e| compute2(e,&boxes,&yy,&zz) ).sum()
 }
 
 pub fn part1(data:&[String])->i64
@@ -307,36 +340,42 @@ fn test2()
 }
 
 
-#[test]
-fn test3()
-{
-    let v = vec![
-        "on x=-20..26,y=-36..17,z=-47..7".to_string(),
-        "on x=-20..33,y=-21..23,z=-26..28".to_string(),
-        "on x=-22..28,y=-29..23,z=-38..16".to_string(),
-        "on x=-46..7,y=-6..46,z=-50..-1".to_string(),
-        "on x=-49..1,y=-3..46,z=-24..28".to_string(),
-        "on x=2..47,y=-22..22,z=-23..27".to_string(),
-        "on x=-27..23,y=-28..26,z=-21..29".to_string(),
-        "on x=-39..5,y=-6..47,z=-3..44".to_string(),
-        "on x=-30..21,y=-8..43,z=-13..34".to_string(),
-        "on x=-22..26,y=-27..20,z=-29..19".to_string(),
-        "off x=-48..-32,y=26..41,z=-47..-37".to_string(),
-        "on x=-12..35,y=6..50,z=-50..-2".to_string(),
-        "off x=-48..-32,y=-32..-16,z=-15..-5".to_string(),
-        "on x=-18..26,y=-33..15,z=-7..46".to_string(),
-        "off x=-40..-22,y=-38..-28,z=23..41".to_string(),
-        "on x=-16..35,y=-41..10,z=-47..6".to_string(),
-        "off x=-32..-23,y=11..30,z=-14..3".to_string(),
-        "on x=-49..-5,y=-3..45,z=-29..18".to_string(),
-        "off x=18..30,y=-20..-8,z=-3..13".to_string(),
-        "on x=-41..9,y=-7..43,z=-33..15".to_string(),
-        "on x=-54112..-39298,y=-85059..-49293,z=-27449..7877".to_string(),
-        "on x=967..23432,y=45373..81175,z=27513..53682".to_string(),
-    ];
 
-    let ss = get_span(&vec![1,5,7,10]);
-    println!("span: {:?}",ss);
-    
-    assert_eq!(part2(&v),590784);
+
+//1           5        7           10
+//1   (2,4)   5    6   7    (8,9)  10
+//1,1  2,3    5,1  6,1 7,1   8,2   10,1
+
+//1         5 
+//1 (2,3,4) 5
+
+#[test]
+fn test_span1()
+{
+    let v = vec![1,5];
+    assert_eq!(get_span(&v),vec![(1,1),(2,3),(5,1)]);
 }
+
+#[test]
+fn test_span2()
+{
+    let v = vec![1,5,7,10];
+    assert_eq!(get_span(&v),vec![(1,1),(2,3),(5,1),(6,1),(7,1),(8,2),(10,1)]);
+}
+
+
+#[test]
+fn test_span3()
+{
+    let v = vec![10,15,19];
+    assert_eq!(get_span(&v),vec![(10,1),(11,4),(15,1),(16,3),(19,1)]);
+}
+
+#[test]
+fn test_span4()
+{
+    let v = vec![44,50];
+    assert_eq!(get_span(&v),vec![(44,1),(45,5),(50,1)]);
+}
+
+
