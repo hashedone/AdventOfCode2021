@@ -3,6 +3,10 @@ extern crate rand;
 use rand::Rng;
 use std::collections::HashMap;
 
+
+// not working yet
+
+
 struct Alu {
     vals   : HashMap<char,i64>,
     number : String,
@@ -27,13 +31,13 @@ impl Alu
 
     fn set(&mut self,v:&str,val:i64)
     {
-        let vc = v.chars().nth(0).unwrap();
+        let vc = v.chars().next().unwrap();
         self.vals.insert(vc,val);
     }
 
     fn get(&self,v:&str)->i64
     {
-        let c = v.chars().nth(0).unwrap();
+        let c = v.chars().next().unwrap();
         if c=='-' || c.is_digit(10)
         {
             v.parse::<i64>().unwrap()
@@ -44,10 +48,12 @@ impl Alu
         }
     }
 
+    /*
     fn valid(&self)->bool
     {
         self.get("z")==0
     }
+     */
 
     fn read(&mut self)->i64
     {
@@ -70,9 +76,9 @@ impl Alu
 fn execute(data:&[String],number:&str)->i64
 {
     let mut alu = Alu::new(number);
-    let mut command=0;
     
-    for line in data {
+    
+    for (_command,line) in data.iter().enumerate() {
         let cmd : Vec<&str> = line.split(' ').collect();
         let p1 = cmd[          1];
         let p2 = cmd[cmd.len()-1];
@@ -95,10 +101,7 @@ fn execute(data:&[String],number:&str)->i64
             "eql" => alu.set(p1, (alu.get(p1)==alu.get(p2)) as i64),
             _     => panic!("unknown command"),
         }
-
-        command+=1;
-
-
+    
         //println!("{}",line);
         //alu.print_state();
 
@@ -130,8 +133,6 @@ pub fn part1(data:&[String])->u64
     loop 
     {
         let delta = max_val-min_val+1;
-        
-        
 
         //87 744 899 768 809
         if number>=min_val && number<=max_val
@@ -165,7 +166,7 @@ pub fn part1(data:&[String])->u64
     best_number
 }
 
-pub fn part2(data:&[String])->u64
+pub fn part2(_data:&[String])->u64
 {
     0
 }

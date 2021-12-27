@@ -4,57 +4,18 @@ use crate::tools;
 #[derive(Debug,Clone,PartialEq, Eq, PartialOrd, Ord)]
 struct Scanner
 {
-          beams : Vec<(i64,i64,i64)>,
-             id : i64,
-              x : i64,
-              y : i64,
-              z : i64,
-          trans : i64,
+          beams : Vec<(i32,i32,i32)>,
+             id : i32,
+              x : i32,
+              y : i32,
+              z : i32,
+          trans : i32,
            used : bool,
-         points : Vec<(i64,i64,i64)>,
-     all_points : Vec<Vec<(i64,i64,i64)>>
-}
-
-fn inverse_matrix(m:Vec<(i64,i64,i64)>)->Vec<(i64,i64,i64)>
-{
-    let m00:f32 = m[0].0 as f32;
-    let m01:f32 = m[0].1 as f32;
-    let m02:f32 = m[0].2 as f32;
-    let m10:f32 = m[1].0 as f32;
-    let m11:f32 = m[1].1 as f32;
-    let m12:f32 = m[1].2 as f32;
-    let m20:f32 = m[2].0 as f32;
-    let m21:f32 = m[2].1 as f32;
-    let m22:f32 = m[2].2 as f32;
-        
-    let det : f32 = m00 * m11 * m22 - m21 * m12 -
-                    m01 * m10 * m22 - m12 * m20 +
-                    m02 * m10 * m21 - m11 * m20;
-
-    let invdet : f32 = 1.0 / det;
-    
-    let mn00 = (m11 * m22 - m21 * m12) * invdet;
-    let mn01 = (m02 * m21 - m01 * m22) * invdet;
-    let mn02 = (m01 * m12 - m02 * m11) * invdet;
-    let mn10 = (m12 * m20 - m10 * m22) * invdet;
-    let mn11 = (m00 * m22 - m02 * m20) * invdet;
-    let mn12 = (m10 * m02 - m00 * m12) * invdet;
-    let mn20 = (m10 * m21 - m20 * m11) * invdet;
-    let mn21 = (m20 * m01 - m00 * m21) * invdet;
-    let mn22 = (m00 * m11 - m10 * m01) * invdet;
-    
-    vec![(mn00 as i64,mn01 as i64,mn02 as i64),
-         (mn10 as i64,mn11 as i64,mn12 as i64),
-         (mn20 as i64,mn21 as i64,mn22 as i64)]
-}
-
-fn get_inverse_matrix(id:usize)->Vec<(i64,i64,i64)>
-{
-    inverse_matrix(get_view_matrix(id))
+     all_points : Vec<Vec<(i32,i32,i32)>>
 }
 
 //matrices from http://www.euclideanspace.com/maths/algebra/matrix/transforms/examples/index.htm
-fn get_view_matrix(id:usize)->Vec<(i64,i64,i64)>
+fn get_view_matrix(id:usize)->Vec<(i32,i32,i32)>
 {
     let views = vec![
         [( 1, 0, 0),
@@ -141,56 +102,28 @@ fn get_view_matrix(id:usize)->Vec<(i64,i64,i64)>
 
 impl Scanner
 {
-    fn new(id:i64)->Self
+    fn new(id:i32)->Self
     {
         Self {
-            id,
-            beams: Vec::new(),
-            x:0, y:0, z:0,
-            used : false,
-            trans : -1,
-            points: Vec::new(),
-            all_points: Vec::new(),
+                    id,
+                 beams : Vec::new(),
+                     x : 0, 
+                     y : 0, 
+                     z : 0,
+                  used : false,
+                 trans : -1,
+            all_points : Vec::new(),
         }
     }
 
-    fn dist(p1:(i64,i64,i64),p2:(i64,i64,i64))->usize
+    fn dist(p1:(i32,i32,i32),p2:(i32,i32,i32))->usize
     {
         (p2.0-p1.0).abs() as usize +
         (p2.1-p1.1).abs() as usize +
         (p2.2-p1.2).abs() as usize
     }
 
-    fn dist_ok(p1:(i64,i64,i64),p2:(i64,i64,i64))->bool
-    {
-        (p2.0-p1.0).abs()<=1000 &&
-        (p2.1-p1.1).abs()<=1000 &&
-        (p2.2-p1.2).abs()<=1000
-    }
-
-    fn get_xyz(x:i64,y:i64,z:i64,t:i64)->i64
-    {
-        match t {
-             1 =>  x,
-             2 =>  y,
-             3 =>  z,
-            -1 => -x,
-            -2 => -y,
-            -3 => -z,
-            _  => panic!("eee")
-        }
-    }
-
-    fn get_point(x:i64,y:i64,z:i64,transform:(i64,i64,i64))->(i64,i64,i64)
-    {    
-        (
-            Scanner::get_xyz(x,y,z,transform.0),
-            Scanner::get_xyz(x,y,z,transform.1),
-            Scanner::get_xyz(x,y,z,transform.2)
-        )
-    }
-
-    fn transform(p:(i64,i64,i64),mtx:&[(i64,i64,i64)])->(i64,i64,i64)
+    fn transform(p:(i32,i32,i32),mtx:&[(i32,i32,i32)])->(i32,i32,i32)
     {
         let x = p.0*mtx[0].0 + p.1*mtx[0].1 + p.2*mtx[0].2;
         let y = p.0*mtx[1].0 + p.1*mtx[1].1 + p.2*mtx[1].2;
@@ -198,80 +131,26 @@ impl Scanner
         (x,y,z)
     }
 
-    fn get_trans(p:(i64,i64,i64),transform_id:usize)->(i64,i64,i64)
-    {
-        let x = p.0;
-        let y = p.1;
-        let z = p.2;
-
-        match transform_id 
-        {
-             0 => ( x,  y,  z),
-             1 => ( x, -z,  y),
-             2 => ( x, -y, -z),
-             3 => ( x,  z, -y),
-             4 => (-y,  x,  z),
-             5 => ( z,  x,  y),
-             6 => ( y,  x, -z),
-             7 => (-z,  x, -y),
-             8 => (-x, -y,  z),
-             9 => (-x, -z, -y),
-            10 => (-x,  y, -z),
-            11 => (-x,  z,  y),
-            12 => ( y, -x,  z),
-            13 => ( z, -x, -y),
-            14 => (-y, -x, -z),
-            15 => (-z, -x,  y),
-            16 => (-z,  y,  x),
-            17 => ( y,  z,  x),
-            18 => ( z, -y,  x),
-            19 => (-y, -z,  x),
-            20 => (-z, -y, -x),
-            21 => (-y,  z, -x),
-            22 => ( z,  y, -x),
-            23 => ( y, -z, -x),
-            _ => {panic!("error")}
-        } 
-
-    }
-
-    fn transformp(&mut self,tr: &Vec<(i64,i64,i64)>)
+    fn transformp(&mut self)
     {
         self.all_points = vec![];
 
         for i in 0..24 
         {
-            let mtx = &get_view_matrix(i);//get_inverse_matrix(i);
-            let new_points = self.beams.iter().map( |p|
-                    Scanner::get_trans(*p,i)
+            let mtx = &get_view_matrix(i);
+            let new_points = self.beams.iter().map( |p|                    
+                    Scanner::transform(*p, mtx)
             ).collect();
 
             self.all_points.push(new_points);
-            self.points = self.beams.clone();
         }
-
-
     }
     
-    fn claim_found(&mut self,new_points:&Vec<(i64,i64,i64)>,dx:i64,dy:i64,dz:i64)
+    fn match_points(&self,s1_points:&HashSet<(i32,i32,i32)>,s2_points:&[(i32,i32,i32)])->(bool,i32,i32,i32)
     {
-        self.x      = dx;
-        self.y      = dy;
-        self.z      = dz;
-        self.used   = true;
-    }
-
-    fn match_points(&self,s1_points:&HashSet<(i64,i64,i64)>,s2_points:&Vec<(i64,i64,i64)>)->(bool,i64,i64,i64)
-    {
-        let mut points = vec![];
-        for p in s1_points.iter() 
-        {
-            points.push((p.0,p.1,p.2));
-        }
-
         let mut h = HashMap::new();
 
-        for p1 in points.iter() {
+        for p1 in s1_points.iter() {
             for p2 in s2_points {
                 let dx = p1.0 - p2.0;
                 let dy = p1.1 - p2.1;
@@ -281,50 +160,20 @@ impl Scanner
                 h.insert((dx,dy,dz),   v+1);
             }
         }
-        if h.values().into_iter().any(|v| *v>=12)
+        
+        for (p,v) in h.into_iter()
         {
-            for (p,v) in h.into_iter()
+            if v>=12
             {
-                if v>=12
-                {
-                    return (true,p.0,p.1,p.2);
-                }                
-            }
+                return (true,p.0,p.1,p.2);
+            }                
         }
-
+        
         (false,0,0,0)
     }
     
-    fn get_points(&self,id:usize)->&Vec<(i64,i64,i64)> {
+    fn get_points(&self,id:usize)->&Vec<(i32,i32,i32)> {
         &self.all_points[id]
-    }
-
-    #[allow(unused)]
-    fn min_max_x(&mut self)->(i64,i64)
-    {
-        let min_x = self.beams.iter().map(|v| v.0).min().unwrap();
-        let max_x = self.beams.iter().map(|v| v.0).max().unwrap();
-        for i in &mut self.beams
-        {
-            (*i).0 -= min_x;
-        }
-        
-        //self.beams.sort_unstable();
-        (min_x,max_x)
-    }
-
-    #[allow(unused)]
-    fn common(&self,s:&Scanner)->i64
-    {
-        let mut h : HashSet<i64> = HashSet::new();
-        for b in &self.beams {
-            h.insert(b.0);
-        }
-        let mut cnt=0;
-        for b2 in &s.beams {
-            if h.contains(&b2.0) { cnt+=1; }
-        }
-        cnt
     }
 
     #[allow(unused)]
@@ -338,7 +187,7 @@ impl Scanner
     }
 }
 
-fn add_points(points:&mut HashSet<(i64,i64,i64)>,beams:&[(i64,i64,i64)],dx:i64,dy:i64,dz:i64)
+fn add_points(points:&mut HashSet<(i32,i32,i32)>,beams:&[(i32,i32,i32)],dx:i32,dy:i32,dz:i32)
 {
     for p in beams {
         let x = p.0 + dx;
@@ -346,39 +195,6 @@ fn add_points(points:&mut HashSet<(i64,i64,i64)>,beams:&[(i64,i64,i64)],dx:i64,d
         let z = p.2 + dz;
         points.insert((x,y,z));
     }
-}
-
-
-
-fn gen_transforms()->Vec<(i64,i64,i64)>
-{
-    let mut res = vec![];
-    
-    for signs in 0..8 {
-    for x_pos in 0..3 {
-    for y_pos in 0..3 {
-    for z_pos in 0..3 {
-        if x_pos!=y_pos && 
-           y_pos!=z_pos && 
-           x_pos!=z_pos {
-            let mut x = x_pos+1;
-            let mut y = y_pos+1;
-            let mut z = z_pos+1;
-            if signs&1!=0 { x*=-1; }
-            if signs&2!=0 { y*=-1; }
-            if signs&4!=0 { z*=-1; }
-            res.push((x,y,z));
-
-            if x==1 && y==2 && z==3 {
-                //println!("neutral:{}",res.len()-1);
-            }
-            //println!("[{},{},{}]",x,y,z);
-        }
-    }}}}
-
-    res.sort();
-    res.dedup();
-    res
 }
 
 fn compute(data:&[String])->(usize,usize)
@@ -389,33 +205,29 @@ fn compute(data:&[String])->(usize,usize)
     {
         if l.contains("--- scanner")
         {            
-            let id = tools::i32_get_between(l,"--- scanner "," ---") as i64;
+            let id = tools::i32_get_between(l,"--- scanner "," ---");
             scanners.push(Scanner::new(id));
         }
         else if l.contains(',')
         {
             let tab = l.split(',').collect::<Vec<&str>>();
-            let x = tab[0].parse::<i64>().unwrap();
-            let y = tab[1].parse::<i64>().unwrap();
-            let z = tab[2].parse::<i64>().unwrap();
+            let x = tab[0].parse::<i32>().unwrap();
+            let y = tab[1].parse::<i32>().unwrap();
+            let z = tab[2].parse::<i32>().unwrap();
             let s = scanners.last_mut().unwrap();
             s.beams.push((x,y,z));
         }
     }
     
-    let tr = gen_transforms();
     let mut final_points = HashSet::new();
 
     for f in scanners.iter_mut()
     {
-        f.transformp(&tr);
+        f.transformp();
     }
 
-
-    let s0_points = scanners[0].get_points(0).clone();
-
-    scanners[0].claim_found(&s0_points,0,0,0);
-    add_points(&mut final_points,&scanners[0].points,0,0,0);
+    scanners[0].used = true;
+    add_points(&mut final_points,&scanners[0].beams,0,0,0);
 
     let mut found = true;
     let mut a_id = 0usize;
@@ -438,7 +250,7 @@ fn compute(data:&[String])->(usize,usize)
 
                     if res
                     {
-                        b.claim_found(&new_points,dx,dy,dz);
+                        b.used = true;
                         add_points(&mut final_points,&new_points,dx,dy,dz);
 
                         scanners_out.push((dx,dy,dz));
@@ -461,7 +273,7 @@ fn compute(data:&[String])->(usize,usize)
     }
     }
 
-    return (final_points.len(),max_dist);
+    (final_points.len(),max_dist)
 }
 
 pub fn part1(data:&[String])->usize
@@ -626,75 +438,3 @@ fn testr1()
     assert_eq!(part1(&v),79);
 }
 
-#[test]
-fn testr2()
-{
-    let v = vec![
-    ];
-    assert_eq!(part2(&v),900);
-}
-
-#[test]
-fn test_mtx0()
-{
-    assert_eq!(
-    inverse_matrix(vec![( 1, 0, 0),
-                        ( 0, 1, 0),
-                        ( 0, 0, 1)]),
-                   vec![( 1, 0, 0),
-                        ( 0, 1, 0),
-                        ( 0, 0, 1)]
-    );
-}
-
-#[test]
-fn test_mtx1()
-{
-    assert_eq!(
-    inverse_matrix(vec![( 0, 0, 1),
-                        ( 0,-1, 0),
-                        ( 1, 0, 0)]),
-                   vec![( 0, 0, 1),
-                        ( 0,-1, 0),
-                        ( 1, 0, 0)]
-    );
-}
-
-#[test]
-fn test_mtx2()
-{
-    assert_eq!(
-    inverse_matrix(vec![( 0,-1, 0),
-                        ( 0, 0,-1),
-                        ( 1, 0, 0)]),
-                   vec![( 0, 0, 1),
-                        (-1, 0, 0),
-                        ( 0,-1, 0)]
-    );
-}
-
-#[test]
-fn test_mtx3()
-{
-    assert_eq!(
-    inverse_matrix(vec![( 0,-1, 0),
-                        ( 1, 0, 0),
-                        ( 0, 0, 1)]),
-                   vec![( 0, 1, 0),
-                        (-1, 0, 0),
-                        ( 0, 0, 1)]
-    );
-}
-
-#[test]
-fn test_mtx4()
-{
-    assert_eq!(
-    inverse_matrix(vec![( 0,-1, 0),
-                        ( 0, 0, 1),
-                        (-1, 0, 0)]),
-                   vec![( 0, 0,-1),
-                        (-1, 0, 0),
-                        ( 0, 1, 0)]
-    );
-}

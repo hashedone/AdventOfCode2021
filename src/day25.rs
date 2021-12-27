@@ -63,7 +63,7 @@ impl Sea
                 }
             }    
 
-            if to_move.len()>0 
+            if !to_move.is_empty()
             {
                 moved   = true;
 
@@ -97,7 +97,7 @@ impl Sea
                 }
             }      
 
-            if to_move.len()>0 
+            if !to_move.is_empty()
             {
                 moved = true;   
 
@@ -154,17 +154,12 @@ pub fn part1(data:&[String])->i32
     Sea::new(data).get_safe_round()
 }
 
-pub fn part2(data:&[String])->i32
-{
-0
-}
 
 #[allow(unused)]
 pub fn solve(data:&[String])
 {    
     println!("Day25");
     println!("part1:{}",part1(data));
-    println!("part2:{}",part2(data));
 }
 
 #[test]

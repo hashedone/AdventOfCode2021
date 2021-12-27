@@ -65,12 +65,12 @@ fn parse_data(data:&[String])->Vec<Box>
         {
             let tab : Vec<&str> = d.split(',').collect();        
             let ok = d.contains("on");
-            let x0: i32 = tools::i32_get_between(&tab[0],"x=","..");
-            let x1: i32 = tools::i32_get_between(&tab[0],"..", "");
-            let y0: i32 = tools::i32_get_between(&tab[1],"y=","..");
-            let y1: i32 = tools::i32_get_between(&tab[1],"..", "");
-            let z0: i32 = tools::i32_get_between(&tab[2],"z=","..");
-            let z1: i32 = tools::i32_get_between(&tab[2],"..", "");
+            let x0: i32 = tools::i32_get_between(tab[0],"x=","..");
+            let x1: i32 = tools::i32_get_between(tab[0],"..", "");
+            let y0: i32 = tools::i32_get_between(tab[1],"y=","..");
+            let y1: i32 = tools::i32_get_between(tab[1],"..", "");
+            let z0: i32 = tools::i32_get_between(tab[2],"z=","..");
+            let z1: i32 = tools::i32_get_between(tab[2],"..", "");
             Box::new(ok,x0,x1,y0,y1,z0,z1)
         }
     ).collect()
@@ -178,7 +178,7 @@ pub fn solve2ok(data:&[String])->i64
     field.values().into_iter().map(|(area,on)| area*(*on as i64)).sum()
 }
 
-fn compute2(x:&(i32,i32),boxes:&Vec<Box>,yy:&Vec<(i32,i32)>,zz:&Vec<(i32,i32)>)->i64
+fn compute2(x:&(i32,i32),boxes:&[Box],yy:&[(i32,i32)],zz:&[(i32,i32)])->i64
 {
     let mut field  = HashMap::new();
 
@@ -225,12 +225,12 @@ pub fn solve2(data:&[String])->i64
 
 pub fn part1(data:&[String])->i64
 {
-    solve1(&data)
+    solve1(data)
 }
 
 pub fn part2(data:&[String])->i64
 {
-    solve2(&data)
+    solve2(data)
 }
 
 #[allow(unused)]
