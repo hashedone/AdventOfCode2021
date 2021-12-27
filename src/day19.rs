@@ -154,11 +154,11 @@ impl Scanner
         }
     }
 
-    fn dist(p1:(i64,i64,i64),p2:(i64,i64,i64))->i64
+    fn dist(p1:(i64,i64,i64),p2:(i64,i64,i64))->usize
     {
-        (p2.0-p1.0).abs() +
-        (p2.1-p1.1).abs() +
-        (p2.2-p1.2).abs()
+        (p2.0-p1.0).abs() as usize +
+        (p2.1-p1.1).abs() as usize +
+        (p2.2-p1.2).abs() as usize
     }
 
     fn dist_ok(p1:(i64,i64,i64),p2:(i64,i64,i64))->bool
@@ -192,15 +192,10 @@ impl Scanner
 
     fn transform(p:(i64,i64,i64),mtx:&[(i64,i64,i64)])->(i64,i64,i64)
     {
-        ///for p in self.beams.iter_mut() 
         let x = p.0*mtx[0].0 + p.1*mtx[0].1 + p.2*mtx[0].2;
         let y = p.0*mtx[1].0 + p.1*mtx[1].1 + p.2*mtx[1].2;
         let z = p.0*mtx[2].0 + p.1*mtx[2].1 + p.2*mtx[2].2;
         (x,y,z)
-            //            let x = p.0*mtx[0].0 + p.0*mtx[1].0 + p.0*mtx[2].0;
-//            let y = p.1*mtx[0].1 + p.1*mtx[1].1 + p.1*mtx[2].1;
-//            let z = p.2*mtx[0].2 + p.2*mtx[1].2 + p.2*mtx[2].2;
-
     }
 
     fn get_trans(p:(i64,i64,i64),transform_id:usize)->(i64,i64,i64)
@@ -208,42 +203,7 @@ impl Scanner
         let x = p.0;
         let y = p.1;
         let z = p.2;
-        
-        match transform_id 
-        {
-             0 => ( x,  y,  z),
-             1 => (-x, -y,  z),
-             2 => ( x, -y, -z),
-             3 => (-x,  y, -z),
 
-             4 => (-x,  z,  y),
-             5 => ( x, -z,  y),
-             6 => (-x, -z, -y),
-             7 => ( x,  z, -y),
-
-             8 => (-y,  x,  z),
-             9 => ( y, -x,  z),
-            10 => (-y, -x, -z),
-            11 => ( y,  x, -z),
-
-            12 => ( y,  z,  x),
-            13 => (-y, -z,  x),
-            14 => ( y, -z, -x),
-            15 => (-y,  z, -x),
-
-            16 => ( z,  x,  y),
-            17 => (-z, -x,  y),
-            18 => ( z, -x, -y),
-            19 => (-z,  x, -y),
-
-            20 => (-z,  y,  x),
-            21 => ( z, -y,  x),
-            22 => (-z, -y, -x),
-            23 => ( z,  y, -x),
-            _ => {panic!("error")}
-        } 
-
-        /*
         match transform_id 
         {
              0 => ( x,  y,  z),
@@ -272,7 +232,7 @@ impl Scanner
             23 => ( y, -z, -x),
             _ => {panic!("error")}
         } 
-         */ 
+
     }
 
     fn transformp(&mut self,tr: &Vec<(i64,i64,i64)>)
@@ -295,16 +255,13 @@ impl Scanner
     
     fn claim_found(&mut self,new_points:&Vec<(i64,i64,i64)>,dx:i64,dy:i64,dz:i64)
     {
-        //self.points = new_points.iter().map(|p| (p.0-dx,p.1-dy,p.2-dz) ).collect();
-        //self.points = new_points.iter().map(|p| (p.0,p.1,p.2) ).collect();
-        self.points = new_points.iter().map(|p| (p.0+dx,p.1+dy,p.2+dz) ).collect();
         self.x      = dx;
         self.y      = dy;
         self.z      = dz;
         self.used   = true;
     }
 
-    fn match_points(&self,s1_points:&HashSet<(i64,i64,i64)>,s2_points:&Vec<(i64,i64,i64)>)->(bool,i64,i64,i64,Vec<(i64,i64,i64)>)
+    fn match_points(&self,s1_points:&HashSet<(i64,i64,i64)>,s2_points:&Vec<(i64,i64,i64)>)->(bool,i64,i64,i64)
     {
         let mut points = vec![];
         for p in s1_points.iter() 
@@ -330,80 +287,18 @@ impl Scanner
             {
                 if v>=12
                 {
-                    return (true,p.0,p.1,p.2,vec![]);
+                    return (true,p.0,p.1,p.2);
                 }                
             }
         }
 
-        (false,0,0,0,vec![])
+        (false,0,0,0)
     }
     
     fn get_points(&self,id:usize)->&Vec<(i64,i64,i64)> {
         &self.all_points[id]
     }
 
-    /*
-    fn get_fingerprint(&self)->HashMap<i64,usize>
-    {
-        let mut r : HashMap<i64,usize> = HashMap::new();
-
-        for a in 0..self.beams.len()
-        {
-            let mut min_d = i64::MAX;
-            let mut min_d1 = i64::MAX;
-            let mut min_d2 = i64::MAX;
-
-            for b in a+1..self.beams.len()
-            {
-                for c in a+1..self.beams.len()
-                {
-                    let d1 = Scanner::dist(self.beams[a],self.beams[b]);
-                    let d2 = Scanner::dist(self.beams[a],self.beams[c]);
-                    
-                    if d1+d2<min_d 
-                    {
-                        min_d  = d1+d2;
-                        min_d1 = d1;
-                        min_d2 = d2;
-                    }
-                }                    
-            }
-            let area= (min_d2<<16) + min_d1;
-            let v = *r.get(&area).unwrap_or(&0) as usize + 1;
-            r.insert(area,v);
-        }
-        r
-    }
- 
-    fn set_pos(&mut self,x:i64,y:i64,z:i64)
-    {
-        self.x = x;
-        self.y = y;
-        self.z = z;
-    }
-
-    fn set_points(&mut self,po:&Scanner)
-    {
-        self.beams = po.beams.clone();
-        //scanners[b].set_points(&m);
-    }
-    */
-/*
-    fn transform(&mut self,mtx:&[(i64,i64,i64)])
-    {
-        for p in self.beams.iter_mut() 
-        {
-            let x = p.0*mtx[0].0 + p.1*mtx[0].1 + p.2*mtx[0].2;
-            let y = p.0*mtx[1].0 + p.1*mtx[1].1 + p.2*mtx[1].2;
-            let z = p.0*mtx[2].0 + p.1*mtx[2].1 + p.2*mtx[2].2;
-//            let x = p.0*mtx[0].0 + p.0*mtx[1].0 + p.0*mtx[2].0;
-//            let y = p.1*mtx[0].1 + p.1*mtx[1].1 + p.1*mtx[2].1;
-//            let z = p.2*mtx[0].2 + p.2*mtx[1].2 + p.2*mtx[2].2;
-
-            *p = (x,y,z);
-        }
-    }
- */
     #[allow(unused)]
     fn min_max_x(&mut self)->(i64,i64)
     {
@@ -484,17 +379,9 @@ fn gen_transforms()->Vec<(i64,i64,i64)>
     res.sort();
     res.dedup();
     res
-
-//    res
-    //println!("{:?}",res);
-    //println!("tr count {:#?}",res.len());
-    //res.into_iter()
-      // .map(|a| a)
-       //.collect()
 }
 
-
-pub fn part1(data:&[String])->usize
+fn compute(data:&[String])->(usize,usize)
 {
     let mut scanners: Vec<Scanner> = Vec::new();
 
@@ -504,7 +391,6 @@ pub fn part1(data:&[String])->usize
         {            
             let id = tools::i32_get_between(l,"--- scanner "," ---") as i64;
             scanners.push(Scanner::new(id));
-            //"649,640,665".to_string(),
         }
         else if l.contains(',')
         {
@@ -517,254 +403,75 @@ pub fn part1(data:&[String])->usize
         }
     }
     
-    //427 too high
-    //233 wrong
-    //67 wrong
     let tr = gen_transforms();
     let mut final_points = HashSet::new();
-
-    for (id,tt) in tr.iter().enumerate()
-    {
-        if tt.0==1 && tt.1==2 && tt.2==3 
-        {
-            println!("NEUU :{:?}",id);
-        }
-    }
-
-//    println!("tr:{:?}",tr);
-//    println!("BEK:{:?}",&scanners[0].beams);
-//    println!("tr:{:?}",tr[0]);
 
     for f in scanners.iter_mut()
     {
         f.transformp(&tr);
-        //println!("{}",f.all_points.len());
     }
 
-    println!("pp:{}",scanners[4].all_points.len());
+
     let s0_points = scanners[0].get_points(0).clone();
 
     scanners[0].claim_found(&s0_points,0,0,0);
     add_points(&mut final_points,&scanners[0].points,0,0,0);
 
-//    println!("ELO:{:?}",&scanners[0].points);
-
     let mut found = true;
-    let sca_len = scanners.len();
-
-    let mut ii=0;
     let mut a_id = 0usize;
-
-    let mut po = scanners[0].points.clone();
-
-    let mut scanners = vec![];
+    let mut scanners_out = vec![];
 
 
     while found 
     {
-        ii+=1;
-        //println!("{}",ii);
         found = false;
+
+        let sc = scanners[a_id].clone();
+        for (scanner_id,b) in scanners.iter_mut().enumerate() 
+        {
+            if a_id!=scanner_id && !b.used
+            {
+                for id in 0..24
+                {
+                    let new_points = b.get_points(id).clone();
+                    let (res,dx,dy,dz) = sc.match_points(&final_points,&new_points);
+
+                    if res
+                    {
+                        b.claim_found(&new_points,dx,dy,dz);
+                        add_points(&mut final_points,&new_points,dx,dy,dz);
+
+                        scanners_out.push((dx,dy,dz));
+                        a_id = scanner_id;
+                        found = true;
+
+                        break;
+                    }   
+                }                    
+            }
+        }   
         
-        //for a_id in 0..sca_len 
-        {
-            let sc = scanners[a_id].clone();
-            for (scanner_id,b) in scanners.iter_mut().enumerate() 
-            {
-                if a_id!=scanner_id && !b.used// && (!sc.used || a_id==0)
-                {
-                    println!("check {} {}",a_id,scanner_id);
-
-                    for id in 0..24
-                    {
-                        let new_points = b.get_points(id).clone();
-                        let res = sc.match_points(&final_points,&new_points);
-    
-                        if res.0
-                        {
-                            let dx = res.1;
-                            let dy = res.2;
-                            let dz = res.3;
-                            
-                            //println!("added points:{:?}",   &res.4);
-
-                            b.claim_found(&new_points,dx,dy,dz);
-
-                            //po = vec![];
-
-                            //for p in res.4.iter() {
-                              //  po.push((p.0+dx,p.1+dy,p.2+dz));
-                            //}
-                            //b.claim_found(&new_points,dx,dy,dz);
-                            //b.claim_found(&res.4,0,0,0);
-                            //b.claim_found(&res.4,dx,dy,dz);
-                            //add_points(&mut final_points,&res.4,dx,dy,dz);
-                            
-                            let all = res.4;
-                            println!("{}->{}: rot={} point={},{},{}",a_id,scanner_id,id,dx,dy,dz);
-                            println!("common: {} {:?}",all.len(),all);
-//                          add_points(&mut final_points,&new_points,dx,dy,dz);
-                            add_points(&mut final_points,&new_points,dx,dy,dz);//sc.x,sc.y,sc.z);
-
-                            a_id = scanner_id;
-                            //println!("final points:{:?}",new_points);
-                            found = true;
-    
-                            break;
-                        }   
-                        //if found {break;}
-                    }                    
-                }
-                //if found {break;}            
-                //match_points(&self,s2_points:&Vec<(i64,i64,i64)>)->(bool,i64,i64,i64)
-            }   
-          //  if found {break;}
-        }
-        println!("loop");
     }
 
+    let mut max_dist= 0usize;
 
-
-    //scanners[0].used = true;
-    /* 
-    let mut offx = 0;
-    let mut offy = 0;
-    let mut offz = 0;
-
-
-    let mut hs = HashSet::new();
-
-    for f in scanners
-    {
-        let hh = f.get_fingerprint();
-        for f in hh.keys().into_iter() 
-        {
-            hs.insert(*f);
-        }
+    for a in 0..scanners_out.len() {
+    for b in 0..scanners_out.len() {    
+        max_dist = max_dist.max(Scanner::dist(scanners_out[a], scanners_out[b]));        
     }
-*/
-    return final_points.len();
-    
-    /*
-    for i in 0..6 {
-        for a in 0..scanners.len()
-        {
-            if scanners[a].used
-            {
-            for b in 0..scanners.len()            
-            {
-                if !scanners[b].used && a!=b
-                {
-                    let aa = &scanners[a];
-                    println!("{} {}",a,b);
-
-                    for i in 0..24 
-                    {
-                        let mut m = scanners[b].clone();                
-                        m.transform(&get_inverse_matrix(i));
-
-                        let res = find2(aa, &m, (aa.x, aa.y, aa.z));
-
-                        if res.0
-                        {
-                            print!("added scaner:{}->{} count={} ",a,b,res.4);
-
-                            add_points(&mut points,&m.beams,res.1,res.2,res.3);
-                            scanners[b].x =  offx +res.1;
-                            scanners[b].y =  offy +res.2;
-                            scanners[b].z =  offz +res.3;
-
-                            println!("at pos {},{},{}",scanners[b].x,scanners[b].y,scanners[b].z);
-
-                            scanners[b].set_points(&m);
-                            offx += res.1;
-                            offy += res.2;
-                            offz += res.3;
-                            scanners[b].used = true;
-                            break;
-                        }    
-                    }
-                }
-            }
-        }
-        }
     }
- */
-    /*
-    
-    while found<scanners.len()
-    {
-        if tick>scanners.len() { break; }
-        tick+=1;
 
-        for (b_id,b) in scanners.iter_mut()
-                                                  .filter(|s|!s.used)
-                                                  .enumerate()
-        {
-            //println!("{}",b_id);
-            if points.is_empty()
-            {
-                add_points(&mut points,&b.beams,0,0,0);
-                println!("p0 --- {}",points.len());
-                found+=1;
-                b.used = true;
-            }
-            else
-            {
-                let mut win = false;
-                let mut best = 0;
-                let mut best_off = (0,0,0);
-                let mut best_set : Vec<(i64,i64,i64)> = Vec::new();
-                
-                for i in 0..24 
-                {
-                    let mut m = b.clone();                
-                    m.transform(&get_inverse_matrix(i));
-                    let (success,dx,dy,dz,count) = find(&points,&m,(0,0,0));
-
-                    if success && count>best && dx<=1000 && dy<=1000 && dz<=1000
-                    {
-                        best = count;
-                        best_off = (dx,dy,dz);
-                        best_set = m.beams.clone();
-                        win = true;
-                    }                                    
-                }
-
-                //println!("s: {},{},{}",dx,dy,dz);
-                if win 
-                {
-                    b.used = true;
-                    add_points(&mut points,&best_set,best_off.0,best_off.1,best_off.2);
-                    println!("id {} sca {:?}",b_id,best_off);
-                    scanners[b_id].set_pos(best_off.0,best_off.1,best_off.2);
-                    println!("{:?}",best_set);
-                    found+=1;
-                    println!("p0 --- {}",points.len());
-                }
-                else
-                {
-                    print!(".");//{} fail",b_id);
-                }
-            }
-            //b.min_max_x();
-            //b.print();
-        }
-    }
-    */
-    //for (ai,a) in scanners.iter().enumerate() {
-    //    for (bi,b) in scanners.iter().enumerate() {
-    //        if a!=b {
-    //            println!("{}->{}={}",ai,bi,a.common(b));
-    //        }
-    //    }        
-    //}
-    //points.len()
+    return (final_points.len(),max_dist);
 }
 
-pub fn part2(data:&[String])->i64
+pub fn part1(data:&[String])->usize
 {
-    0
+    compute(data).0
+}
+
+pub fn part2(data:&[String])->usize
+{
+    compute(data).1
 }
 
 #[allow(unused)]
