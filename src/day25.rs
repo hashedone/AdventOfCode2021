@@ -16,12 +16,12 @@ impl Sea
             dy,
             field : vec![vec!['.';dx];dy]
         };
-
-        for y in 0..dy
+        
+        for (y_pos,y) in data.iter().enumerate()
         {
             for x in 0..dx
             {
-                res.field[y][x] = data[y].chars().nth(x).unwrap();
+                res.field[y_pos][x] = y.chars().nth(x).unwrap();
             }                
         }
         res

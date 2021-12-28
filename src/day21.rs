@@ -29,7 +29,9 @@ fn compute1(data:&[String])->i64
     3*count*score[1-player]
 }
 
-fn compute2(h:&mut HashMap<(bool,u8,i64,i64,i64,i64),(i64,i64)>,player_one:bool,sum_dices:u8,p1:i64,p2:i64,s1:i64,s2:i64)->(i64,i64)
+type Space = (bool,u8,i64,i64,i64,i64);
+
+fn compute2(h:&mut HashMap<Space,(i64,i64)>,player_one:bool,sum_dices:u8,p1:i64,p2:i64,s1:i64,s2:i64)->(i64,i64)
 {
     let hash_key = &(player_one,sum_dices,p1,p2,s1,s2);
     if h.contains_key(hash_key)

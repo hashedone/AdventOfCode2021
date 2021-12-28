@@ -89,7 +89,7 @@ pub fn solve1(data:&[String])->i64
     count3d(&field)    
 }
 
-fn get_xes(boxes:&Vec<Box>,id:char)->Vec<i32>
+fn get_xes(boxes:&[Box],id:char)->Vec<i32>
 {
     boxes.iter()
          .map(|e| 
@@ -104,7 +104,7 @@ fn get_xes(boxes:&Vec<Box>,id:char)->Vec<i32>
          .collect()
 }
 
-fn get_span(res:&Vec<i32>)->Vec<(i32,i32)>
+fn get_span(res:&[i32])->Vec<(i32,i32)>
 {
     res.iter()
        .enumerate()
@@ -136,15 +136,16 @@ fn get_span(res:&Vec<i32>)->Vec<(i32,i32)>
        .collect::<Vec<(i32,i32)>>()
 }
 
-fn get_points(boxes:&Vec<Box>,id:char)->Vec<(i32,i32)>
+fn get_points(boxes:&[Box],id:char)->Vec<(i32,i32)>
 {
     let mut res= get_xes(boxes, id);
-    res.sort();
+    res.sort_unstable();
     res.dedup();
 
     get_span(&res)
 }
 
+#[allow(unused)]
 pub fn solve2ok(data:&[String])->i64
 {
     let mut field  = HashMap::new();
