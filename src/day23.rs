@@ -285,12 +285,13 @@ fn go(depth:usize,max_depth:usize,best:&mut usize,f:&mut Field,amph:&mut Vec<(ch
             {
                 Field::swap(&mut f.field,x0, y0, x1, y1);
                 let new_cost = cost + Field::get_cost(c,x0,y0,x1,y1);
-                //let mut new_amph = amph.clone();
+
                 amph[id].1 = x1;
                 amph[id].2 = y1;
                 let nc = go(depth+1,max_depth,best,f,amph,new_cost);
                 amph[id].1 = x0;
                 amph[id].2 = y0;
+
                 res = res.min(nc);
 
                 Field::swap(&mut f.field,x0, y0, x1, y1);
@@ -300,7 +301,7 @@ fn go(depth:usize,max_depth:usize,best:&mut usize,f:&mut Field,amph:&mut Vec<(ch
     
     res
 }
-
+/*
 fn go_bfs(depth:usize,max_depth:usize,best:&mut usize,f:&mut Field,amph:&mut Vec<(char,i32,i32)>,cost:usize)->usize
 {
     if  cost>=*best     { return usize::MAX; }
@@ -360,20 +361,21 @@ fn go_bfs(depth:usize,max_depth:usize,best:&mut usize,f:&mut Field,amph:&mut Vec
     
     res
 }
-
+ */
 
 pub fn part1(data:&[String])->usize
 {
     let mut f = Field::new(data);
     let mut am = f.amph.clone();
-    let mut best = 100000;//usize::MAX;
+    let mut best = 15540;//usize::MAX;
 
     let mut max_depth=15;
 
     //let mut tab =vec![];
   //  loop 
 //    {
-        let ccc = go(0,max_depth,&mut best,&mut f,&mut am,0);
+    let ccc = go(0,7,&mut best,&mut f,&mut am,0);
+    let ccc2 = go(0,max_depth,&mut best,&mut f,&mut am,0);
     //    max_depth+=1;
 
   //      if max_depth>100 {break;}
