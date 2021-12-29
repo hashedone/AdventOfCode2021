@@ -3,13 +3,11 @@ use std::collections::HashMap;
 
 struct Field
 {
-        dx : usize,
-        dy : usize,
-     field : Vec<Vec<char>>,
-      amph : Vec<(char,i32,i32)>,
-      xpos : HashMap<char,usize>,
-final_code : usize,
-      cost : HashMap<usize,usize>,
+       field : Vec<Vec<char>>,
+       ampho : Vec<(char,i32,i32)>,
+        xpos : HashMap<char,usize>,
+  final_code : usize,
+        cost : HashMap<usize,usize>,
 }
 
 impl Field
@@ -20,10 +18,8 @@ impl Field
         let dy = data.len();
 
         let mut res = Self {
-                    dx,
-                    dy,
                  field : vec![vec!['.';dx];dy],
-                  amph : vec![],                    
+                 ampho : vec![],                    
                   xpos : HashMap::new(),   
             final_code : Field::final_state(),
                   cost : HashMap::new(),
@@ -38,10 +34,13 @@ impl Field
     
                 if c.is_alphabetic() 
                 {
-                    res.amph.push((c,x as i32,y_pos as i32));
+                    res.ampho.push((c,x as i32,y_pos as i32));
                 }
             }                
         }
+
+        res.ampho.sort();
+        println!("{:?}",res.ampho);
 
         res.xpos.insert('A', 3);
         res.xpos.insert('B', 5);
@@ -140,21 +139,84 @@ impl Field
 
     fn swap(field:&mut Vec<Vec<char>>,x0:i32,y0:i32,x1:i32,y1:i32)
     {
-                let t = field[y0 as usize][x0 as usize];
+                             let t = field[y0 as usize][x0 as usize];
         field[y0 as usize][x0 as usize] = field[y1 as usize][x1 as usize];
         field[y1 as usize][x1 as usize] = t;
         //std::mem::swap(x, y)
     }
 
+    fn clean_road(&self,x0:usize,y0:usize,x1:usize,y1:usize)->bool {
+        for x in usize::min(x0,x1) as usize+1..=usize::max(x0,x1) as usize-1 {
+            if self.field[1][x]!='.' {return false;}
+        }
+        for y in usize::min(y0,y1) as usize+1..=usize::max(y0,y1) as usize-1 {
+            if y1==1 {
+                if self.field[y][x0 as usize]!='.' { return false; }
+            }
+            else {
+                if self.field[y][x1 as usize]!='.' { return false; }
+            }
+        }
+
+        if y0==3 && self.field[y0-1][x0 as usize]!='.' { return false; }
+        if y0==2 && self.field[y0-1][x0 as usize]!='.' { return false; }
+        true
+    }
+    
     fn good_move(&self,c:char,x0:i32,y0:i32,x1:i32,y1:i32)->bool
     {
         if y1<1 || y1>3 { return false; }
+        if y0<1 || y0>3 { return false; }
+
+        if x0==x1 { return false; }
+        if y0==y1 { return false; }
+
+        if self.field[y0 as usize][x0 as usize]=='.' 
+        { 
+            //println!("{:?}",self.amph);
+            
+            self.print(999);
+            println!("{},{}->{},{}",x0,y0,x1,y1); 
+            panic!("xy0");
+            return false; 
+            
+        }
+
+        if y0==3 {
+            if x0==3 && c=='A' { return false; }
+            if x0==5 && c=='B' { return false; }
+            if x0==7 && c=='C' { return false; }
+            if x0==9 && c=='D' { return false; }
+        }
+
+        if y1>1 
+        {
+            if x1==3 && c!='A' { return false; }
+            if x1==5 && c!='B' { return false; }
+            if x1==7 && c!='C' { return false; }
+            if x1==9 && c!='D' { return false; }
+        }
+        else 
+        {
+            if y0==3 && self.field[(y0-1) as usize][x0 as usize]!='.' { return false; }
+            if y0==3 && self.field[(y0-2) as usize][x0 as usize]!='.' { return false; }
+            if y0==2 && self.field[(y0-1) as usize][x0 as usize]!='.' { return false; }
+        }
+
+        if y1==2 && self.field[3 as usize][x1 as usize]!='.'
+        {
+            if self.field[3 as usize][x1 as usize]!=c { return false;}
+        }
+
+        if y0==1 && y1==2 {
+            if self.field[3 as usize][x1 as usize]=='.' { return false; }
+        }
 
         if self.field[y1 as usize][x1 as usize]!='.' { return false; }
 
         if x0==x1 
         {
-            let matched = *self.xpos.get(&c).unwrap_or(&0)==x1 as usize;
+            let matched = *self.xpos.get(&c).unwrap()==x1 as usize;
 
             if y0==1
             {
@@ -201,199 +263,184 @@ impl Field
         self.field[y1 as usize][x1 as usize]=='.'
     }
 
-    fn print(&self)
+    fn print(&self,n:usize)
     {
         for y in self.field.iter() {
             let yy = y.iter().collect::<String>();
             println!("{:?}",yy);
         }
-        println!();
+        println!("{}",n);
     }
-
-/*
-    fn move_ok(&self,x0:i32,y0:i32,x1:i32,y1:i32)->bool
-    {
-        if y0<y1
-        {
-            if x0>x1
-            {
-                for x in (x1..=x0-1).rev()
-                {
-                    if self.field[y0 as usize][x as usize]!='.' { return false; }
-                }
-                for y in (x1..=x0-1).rev()
-                {
-                    if self.field[y0 as usize][x1 as usize]!='.' { return false; }
-                }
-                
-            }
-            else {
-                for x in x0+1..=x1 
-                {
-                    if self.field[y0 as usize][x as usize]!='.' { return false; }
-                }
-            }
-            //2,3 des
-            return false;
-        }
-        else {
-            return false;
-        }
-        true
-    }
-   */  
 }
 
-fn go(depth:usize,max_depth:usize,best:&mut usize,f:&mut Field,amph:&mut Vec<(char,i32,i32)>,
-moves :&mut HashMap<usize,Vec<(char,usize,i32,i32,i32,i32)>>,
-        cost:usize)->usize
+fn get_possible_moves(y:i32)->Vec<(i32,i32)>
 {
-    //f.print();
-    
-    if cost >=*best      { return *best; }
-    if depth>  max_depth { return *best; }
+    if y==3 || y==2 {
+        return vec![( 1,1),
+                    ( 2,1),
+                    ( 4,1),
+                    ( 6,1),
+                    ( 8,1),
+                    (10,1),
+                    (11,1),
+                    ];
+    }
+    if y==1 {
+        return vec![(3,3),
+                    (5,3),
+                    (7,3),
+                    (9,3),
+                    (3,2),
+                    (5,2),
+                    (7,2),
+                    (9,2),
+                    ];
+    }
+    panic!("wat?");
+    vec![]
+}
+
+fn go(depth     : usize,
+      max_depth : usize,
+      best      : &mut usize,
+      f         : &mut Field,
+      amph      : &mut Vec<(char,i32,i32)>,
+      moves     : &mut HashMap<usize,Vec<(char,usize,i32,i32,i32,i32)>>,
+      cost      : usize)
+{
+    if cost >=*best      { return; }
+    if depth>  max_depth { return; }
+
+//  if depth==2 {f.print(); return *best;}
+//  if depth>  2 { return *best; }
 
     let state = f.get_code();
-    let mut res = *best;
+    //let mut res = *best;
 
     let current_cost = *f.cost.get(&state).unwrap_or(&best);
-    if cost>current_cost { return current_cost; }
+    if cost>=current_cost { return; }
 
     f.cost.insert(state,cost);
 
     if state==f.final_code
     {
         println!("found:{}",cost);
+        //f.print();
         *best = cost;
-        return cost;
+        return;
     }
 
-    //count how many moves if from current state and store
-//    let moves = [(0,2),(0,1),(1,0),(-1,0),(0,-2),(0,-1)];
+    if depth<3 {
+        println!("depth:{} max:{}  moves:{}",depth,max_depth, f.cost.len());
+    }
 
     let mo = moves.get(&state);
 
     if mo==None
     {
-        let moves_dir = [(0,-1),(0,1),(-1,0),(1,0)];
         let mut good_moves = vec![];
 
         for id in 0..amph.len()
         {
-            let c = amph[id].0;//*ch;
-            let x0 = amph[id].1;//*x;
-            let y0 = amph[id].2;//;*y;
+            let c = amph[id].0; //*ch;
+            let x0 = amph[id].1; //*x;
+            let y0 = amph[id].2; //;*y;
 
-            if depth<5 {
-                println!("depth:{} max:{} id:{} moves:{}",depth,max_depth, id,f.cost.len());
-            }
-
-            for mo in moves_dir 
+            for mo in get_possible_moves(y0)
             {
-                let x1 = x0 + mo.0;
-                let y1 = y0 + mo.1;
+                let x1 = mo.0;
+                let y1 = mo.1;
 
-                if f.good_move(c,x0,y0,x1,y1)
+                if f.good_move(c,x0,y0,x1,y1) && f.clean_road(x0 as usize,y0 as usize,x1 as usize,y1 as usize)
                 {
+                    if f.field[y1 as usize][x1 as usize]!='.' { panic!("1"); }
+                    if f.field[y0 as usize][x0 as usize]=='.' { panic!("2"); }
                     good_moves.push((c,id,x0,y0,x1,y1));
                 }
             }
         }
+        if moves.get(&state)!=None {
+            panic!("none");
+        }
         moves.insert(state, good_moves);
     }
 
-    if moves.get(&state).unwrap().len()==0 {
-        return *best;
+    if moves.get(&state).unwrap().len()==0 
+    {
+        return;
     }
+
     let good_moves2 = moves.get(&state).unwrap().clone();
 
-    for (c,id,x0,y0,x1,y1) in good_moves2.iter()
+    for (num,(c,ids,x0,y0,x1,y1)) in good_moves2.into_iter().enumerate()
     {
-        Field::swap(&mut f.field,*x0, *y0, *x1, *y1);                
-        let new_cost = cost + Field::get_cost(*c,*x0,*y0,*x1,*y1);
+        ///f.print(num);
 
-        amph[*id].1 = *x1;
-        amph[*id].2 = *y1;
-        let nc = go(depth+1,max_depth,best,f,amph,moves,new_cost);
-        amph[*id].1 = *x0;
-        amph[*id].2 = *y0;
+        let ox0 = x0;
+        let ox1 = x1;
+        let oy0 = y0;
+        let oy1 = y1;
 
-        res = res.min(nc);
+        Field::swap(&mut f.field,ox0,oy0,ox1,oy1);
+        //f.print(num);
 
-        Field::swap(&mut f.field,*x0, *y0, *x1, *y1);
-    }
-    
-    res
-}
-/*
-fn go_bfs(depth:usize,max_depth:usize,best:&mut usize,f:&mut Field,amph:&mut Vec<(char,i32,i32)>,cost:usize)->usize
-{
-    if  cost>=*best     { return usize::MAX; }
-    if depth> max_depth { return usize::MAX; }
+        let new_cost = cost + Field::get_cost(c,x0,y0,x1,y1);
 
-    //f.print();
+        let ol1 = amph[ids].1;
+        let ol2 = amph[ids].2;
 
-    let state = f.get_code();
-    let mut res = usize::MAX;
-
-    let current_cost = *f.cost.get(&state).unwrap_or(&usize::MAX);
-    if cost>current_cost { return current_cost; }
-
-    f.cost.insert(state,cost);
-
-    if state==f.final_code
-    {
-        println!("found:{}",cost);
-        *best = cost;
-        return cost;
-    }
-
-//    let moves = [(0,2),(0,1),(1,0),(-1,0),(0,-2),(0,-1)];
-    let moves = [(0,1),(-1,0),(0,-1),(1,0)];
-
-    for (id,(ch,x,y)) in amph.clone().iter().rev().enumerate()
-    {
-        let x0 = *x;
-        let y0 = *y;
-        let c = *ch;
-
-        if depth<2 {
-            println!("depth:{} max:{} id:{}",depth,max_depth, id);
-        }
-
-        for mo in moves 
+        if x0!=ol1 || y0!=ol2 
         {
-            let x1 = x0 + mo.0;
-            let y1 = y0 + mo.1;
+            println!("error id:{} letter:{}",ids,c);
+            f.print(55);
+            println!("{:?}",  amph);
 
-            if f.good_move(c,x0,y0,x1,y1)
-            {
-                Field::swap(&mut f.field,x0, y0, x1, y1);
-                let new_cost = cost + Field::get_cost(c,x0,y0,x1,y1);
-                //let mut new_amph = amph.clone();
-                amph[id].1 = x1;
-                amph[id].2 = y1;
-                let nc = go(depth+1,max_depth,best,f,amph,new_cost);
-                amph[id].1 = x0;
-                amph[id].2 = y0;
-                res = res.min(nc);
+            println!("{} {}",x0 ,y0 );
+            println!("{} {}",ol1,ol2);
+            panic!("e");
+        }        
+        
 
-                Field::swap(&mut f.field,x0, y0, x1, y1);
-            }
+        if f.field[amph[ids].2 as usize][amph[ids].1 as usize]!='.'
+        {
+            panic!("eeeeeee");
         }
+
+        amph[ids].1 = x1;
+        amph[ids].2 = y1;
+        go(depth+1,max_depth,best,f,amph,moves,new_cost);        
+        amph[ids].1 = ol1;
+        amph[ids].2 = ol2;
+
+        //res = res.min(nc);
+
+        //Field::swap(&mut f.field,x0,y0,x1,y1);
+        Field::swap(&mut f.field,ox0,oy0,ox1,oy1);
     }
     
-    res
+    
 }
- */
 
 pub fn part1(data:&[String])->usize
 {
     let mut f = Field::new(data);
-    let mut am = f.amph.clone();
+    let mut am = f.ampho.clone();
     let mut best = 15540;//usize::MAX;
 
-    let mut max_depth=15;
+//    let mut max_depth=14; nothing found
+
+//depth:2 max:16  moves:4922724
+//part1:14019
+//Elapsed: 585.809 secs
+
+    let mut max_depth=16;
+//       15540 too high
+//       15378 too high
+// found:15022
+// found:15020
+// found:14041
+// found:14021
+// found:14019 too low
 
     //let mut tab =vec![];
   //  loop 
@@ -401,8 +448,6 @@ pub fn part1(data:&[String])->usize
     //let ccc = go(0,7,&mut best,&mut f,&mut am,0);
 
     let mut moves: HashMap<usize,Vec<(char,usize,i32,i32,i32,i32)>> = HashMap::new();
-
-    
     let ccc2 = go(0,max_depth,&mut best,&mut f,&mut am,&mut moves,0);
     //    max_depth+=1;
 
@@ -468,6 +513,22 @@ fn test3()
     ];
     assert_eq!(part1(&v),8+2 +8000);
 }
+
+
+#[test]
+fn testb4()
+{
+    let v = vec![
+"#############".to_string(),
+"#...........#".to_string(),
+"###B#C#B#D###".to_string(),
+"  #A#D#C#A#".to_string(),
+"  #########".to_string(),
+    ];
+    assert_eq!(part1(&v),12521);
+}
+
+
 /*
 
 #[test]
