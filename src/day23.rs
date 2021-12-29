@@ -23,7 +23,7 @@ impl Field
                     dx,
                     dy,
                  field : vec![vec!['.';dx];dy],
-                  amph : vec![],     
+                  amph : vec![],                    
                   xpos : HashMap::new(),   
             final_code : Field::final_state(),
                   cost : HashMap::new(),
@@ -64,7 +64,8 @@ impl Field
     // 4  #########    
     fn code(&self,x:usize,y:usize)->usize
     {
-        match self.field[y][x] {
+        match self.field[y][x] 
+        {
             '.' => 0,
             'A' => 1,
             'B' => 2,
@@ -148,6 +149,8 @@ impl Field
     fn good_move(&self,c:char,x0:i32,y0:i32,x1:i32,y1:i32)->bool
     {
         if y1<1 || y1>3 { return false; }
+
+        if self.field[y1 as usize][x1 as usize]!='.' { return false; }
 
         if x0==x1 
         {
@@ -241,13 +244,14 @@ impl Field
    */  
 }
 
-fn go(depth:usize,max_depth:usize,best:&mut usize,f:&mut Field,amph:&mut Vec<(char,i32,i32)>,cost:usize)->usize
+fn go(depth:usize,max_depth:usize,best:&mut usize,f:&mut Field,amph:&mut Vec<(char,i32,i32)>,
+moves :&mut HashMap<usize,Vec<(char,usize,i32,i32,i32,i32)>>,
+        cost:usize)->usize
 {
     //f.print();
     
-    if  cost>=*best { return *best; }
-    if depth> max_depth   { return *best; }
-
+    if cost >=*best      { return *best; }
+    if depth>  max_depth { return *best; }
 
     let state = f.get_code();
     let mut res = *best;
@@ -263,40 +267,60 @@ fn go(depth:usize,max_depth:usize,best:&mut usize,f:&mut Field,amph:&mut Vec<(ch
         *best = cost;
         return cost;
     }
+
+    //count how many moves if from current state and store
 //    let moves = [(0,2),(0,1),(1,0),(-1,0),(0,-2),(0,-1)];
-    let moves = [(0,1),(-1,0),(0,-1),(1,0)];
 
-    for (id,(ch,x,y)) in amph.clone().iter().enumerate()
+    let mo = moves.get(&state);
+
+    if mo==None
     {
-        let x0 = *x;
-        let y0 = *y;
-        let c = *ch;
+        let moves_dir = [(0,-1),(0,1),(-1,0),(1,0)];
+        let mut good_moves = vec![];
 
-        if depth<2 {
-            println!("depth:{} max:{} id:{}",depth,max_depth, id);
-        }
-
-        for mo in moves 
+        for id in 0..amph.len()
         {
-            let x1 = x0 + mo.0;
-            let y1 = y0 + mo.1;
+            let c = amph[id].0;//*ch;
+            let x0 = amph[id].1;//*x;
+            let y0 = amph[id].2;//;*y;
 
-            if f.good_move(c,x0,y0,x1,y1)
+            if depth<5 {
+                println!("depth:{} max:{} id:{} moves:{}",depth,max_depth, id,f.cost.len());
+            }
+
+            for mo in moves_dir 
             {
-                Field::swap(&mut f.field,x0, y0, x1, y1);
-                let new_cost = cost + Field::get_cost(c,x0,y0,x1,y1);
+                let x1 = x0 + mo.0;
+                let y1 = y0 + mo.1;
 
-                amph[id].1 = x1;
-                amph[id].2 = y1;
-                let nc = go(depth+1,max_depth,best,f,amph,new_cost);
-                amph[id].1 = x0;
-                amph[id].2 = y0;
-
-                res = res.min(nc);
-
-                Field::swap(&mut f.field,x0, y0, x1, y1);
+                if f.good_move(c,x0,y0,x1,y1)
+                {
+                    good_moves.push((c,id,x0,y0,x1,y1));
+                }
             }
         }
+        moves.insert(state, good_moves);
+    }
+
+    if moves.get(&state).unwrap().len()==0 {
+        return *best;
+    }
+    let good_moves2 = moves.get(&state).unwrap().clone();
+
+    for (c,id,x0,y0,x1,y1) in good_moves2.iter()
+    {
+        Field::swap(&mut f.field,*x0, *y0, *x1, *y1);                
+        let new_cost = cost + Field::get_cost(*c,*x0,*y0,*x1,*y1);
+
+        amph[*id].1 = *x1;
+        amph[*id].2 = *y1;
+        let nc = go(depth+1,max_depth,best,f,amph,moves,new_cost);
+        amph[*id].1 = *x0;
+        amph[*id].2 = *y0;
+
+        res = res.min(nc);
+
+        Field::swap(&mut f.field,*x0, *y0, *x1, *y1);
     }
     
     res
@@ -374,8 +398,12 @@ pub fn part1(data:&[String])->usize
     //let mut tab =vec![];
   //  loop 
 //    {
-    let ccc = go(0,7,&mut best,&mut f,&mut am,0);
-    let ccc2 = go(0,max_depth,&mut best,&mut f,&mut am,0);
+    //let ccc = go(0,7,&mut best,&mut f,&mut am,0);
+
+    let mut moves: HashMap<usize,Vec<(char,usize,i32,i32,i32,i32)>> = HashMap::new();
+
+    
+    let ccc2 = go(0,max_depth,&mut best,&mut f,&mut am,&mut moves,0);
     //    max_depth+=1;
 
   //      if max_depth>100 {break;}
@@ -572,4 +600,6 @@ fn test3()
    20
 
 15540 too high
+
+17538
  */
