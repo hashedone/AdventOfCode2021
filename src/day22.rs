@@ -163,7 +163,7 @@ pub fn solve2ok(data:&[String])->i64
         }}
     }
     
-    let keys : Vec<(i32,i32,i32)> = field.keys().into_iter().map(|p| *p).collect();
+    let keys : Vec<(i32,i32,i32)> = field.keys().into_iter().copied().collect();
 
     for b in boxes 
     {
@@ -189,7 +189,7 @@ fn compute2(x:&(i32,i32),boxes:&[Box],yy:&[(i32,i32)],zz:&[(i32,i32)])->i64
         field.insert((x.0,y.0,z.0), (area,false));
     }}
 
-    let keys : Vec<(i32,i32,i32)> = field.keys().into_iter().map(|p| *p).collect();
+    let keys : Vec<(i32,i32,i32)> = field.keys().into_iter().copied().collect();
 
     let mut sum : i64 = 0;
 
