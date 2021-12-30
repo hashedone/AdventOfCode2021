@@ -41,7 +41,7 @@ impl Field
         }
 
         res.ampho.sort_unstable();
-        println!("{:?}",res.ampho);
+        //println!("{:?}",res.ampho);
 
         res.xpos.insert('A', 3);
         res.xpos.insert('B', 5);
@@ -276,18 +276,12 @@ fn go(depth     : usize,
 
     if state==f.final_code
     {
-        println!("found:{}",cost);
+        //println!("found:{}",cost);
         //f.print();
         *best = cost;
         return;
     }
 
-    if depth<3 {
-        //println!("depth:{} max:{}  moves:{}",depth,max_depth, f.cost.len());
-    }
-
-    //let mo = moves.get(&state);
-   // if mo==None
     {
         let mut good_moves = vec![];
 
@@ -404,7 +398,6 @@ impl Field2
         }
 
         res.ampho.sort_unstable();
-        println!("{:?}",res.ampho);
 
         res.xpos.insert('A', 3);
         res.xpos.insert('B', 5);
@@ -545,17 +538,6 @@ impl Field2
     
     fn good_move(&self,c:char,x0:i32,y0:i32,x1:i32,y1:i32)->bool
     {
-        if x0==x1 { panic!("xx") }
-        if y0==y1 { panic!("yy") }
-
-        if self.field[y0 as usize][x0 as usize]=='.' 
-        { 
-            //self.print(999);
-            //println!("{},{}->{},{}",x0,y0,x1,y1); 
-            panic!("xy0");
-            //return false;             
-        }
-
         if self.field[y1 as usize][x1 as usize]!='.' 
         {
             return false;
@@ -564,7 +546,6 @@ impl Field2
         {
             panic!("yy");
         }
-
 
         //do not move if matches
         if y0>1 
@@ -609,11 +590,6 @@ impl Field2
             {
                 if self.field[y as usize][x1 as usize]!='.' { return false; }
             }
-            //if ok { return false;}
-            //if x1==3 && c!='A' { return false; }
-            //if x1==5 && c!='B' { return false; }
-            //if x1==7 && c!='C' { return false; }
-            //if x1==9 && c!='D' { return false; }
         }
           else 
         {
@@ -623,12 +599,6 @@ impl Field2
                 if cc!='.' { return false; }
             }
         }
-
-        //if y1==2 && (self.field[3][x1 as usize]!=c || self.field[4][x1 as usize]!=c || self.field[5][x1 as usize]!=c) { return false; }
-        //if y1==3 && (                                 self.field[4][x1 as usize]!=c || self.field[5][x1 as usize]!=c) { return false; }
-        //if y1==4 && (                                                                  self.field[5][x1 as usize]!=c) { return false; }
-        //tutu
-        //if y0==1 && y1==2 && self.field[3][x1 as usize]=='.' { return false; }
 
         self.field[y1 as usize][x1 as usize]=='.'
     }
@@ -682,11 +652,10 @@ fn go2(depth     : usize,
     
     if state==f.final_code
     {
-        
         //f.print();
         if cost<*best
         {
-            println!("found:{}",cost);
+            //println!("found:{}",cost);
             *best = cost;
         }
             
@@ -703,32 +672,46 @@ fn go2(depth     : usize,
         //println!("depth:{} max:{}  moves:{}",depth,max_depth, f.cost.len());
     }
 
-    //let mo = moves.get(&state);
-   // if mo==None
-    //{
-        let mut good_moves = vec![];
+/*
 
-        for (id,amph) in amph.iter().enumerate()
-        {
-            let c = amph.0;
-            let x0 = amph.1;
-            let y0 = amph.2;
+        let good_moves:Vec<(char,usize,i32,i32,i32,i32)> = amph.into_iter()
+                         .enumerate()
+                         .map( |(id,(c,x0,y0))|
+                            get_possible_moves2(*y0)
+                            .into_iter()
+                            .filter_map(|(x1,y1)|
+                            {
+                                if f.good_move(*c,*x0,*y0,x1,y1) && 
+                                   f.clean_road(*x0 as usize,*y0 as usize,x1 as usize,y1 as usize)
+                                {                                    
+                                    Some((*c,id,*x0,*y0,x1,y1))
+                                }
+                                  else 
+                                {
+                                    None
+                                }
+                            }).collect::<Vec<(char,usize,i32,i32,i32,i32)>>()
+                        )
+                        .flatten()
+                        .collect::<Vec<(char,usize,i32,i32,i32,i32)>>();
+*/
 
-            for mo in get_possible_moves2(y0)
+            let mut good_moves = vec![];
+
+            for (id,(c,x0,y0)) in amph.iter().enumerate()
             {
-                let x1 = mo.0;
-                let y1 = mo.1;
-
-                if f.good_move(c,x0,y0,x1,y1) && f.clean_road(x0 as usize,y0 as usize,x1 as usize,y1 as usize)
+                for mo in get_possible_moves2(*y0)
                 {
-                    if f.field[y1 as usize][x1 as usize]!='.' { panic!("1"); }
-                    if f.field[y0 as usize][x0 as usize]=='.' { panic!("2"); }
-                    good_moves.push((c,id,x0,y0,x1,y1));
+                    let x1 = mo.0;
+                    let y1 = mo.1;
+
+                    if f.good_move(*c,*x0,*y0,x1,y1) && f.clean_road(*x0 as usize,*y0 as usize,x1 as usize,y1 as usize)
+                    {
+                        good_moves.push((*c,id,*x0,*y0,x1,y1));
+                    }
                 }
             }
-            //}
-            //moves.insert(state, good_moves);
-        }
+
 
     if good_moves.is_empty()
     {
@@ -739,20 +722,9 @@ fn go2(depth     : usize,
 
     for (c,ids,x0,y0,x1,y1) in good_moves2.into_iter()
     {
-        //f.print((x0+y0) as usize);
         Field2::swap(&mut f.field,x0,y0,x1,y1);
-        //println!("{},{} => {},{}",x0,y0,x1,y1);
-        //f.print((x0+y0) as usize);
-        //println!();
-        //println!();
-
         let new_cost = cost + Field2::get_cost(c,x0,y0,x1,y1);
-
-        if f.field[amph[ids].2 as usize][amph[ids].1 as usize]!='.'
-        {
-            panic!("eeeeeee");
-        }
-         
+        
         amph[ids].1 = x1;
         amph[ids].2 = y1;
         go2(depth+1,max_depth,best,f,amph,new_cost);
@@ -802,24 +774,10 @@ pub fn part2(data:&[String])->usize
 pub fn solve(data:&[String])
 {    
     println!("Day23");
-    //println!("part1:{}",part1(data));
+    println!("part1:{}",part1(data));
 
-    //52296 too high
 
-    let v2 = vec![
-    "#############".to_string(),
-    "#...........#".to_string(),
-    "###C#A#B#D###".to_string(),
-    "  #D#C#B#A#  ".to_string(),
-    "  #D#B#A#C#  ".to_string(),
-    "  #D#C#A#B#  ".to_string(),
-    "  #########  ".to_string(),
-    ];
-
-    println!("part2:{}",part2(&v2));
-/*
-
-    vec![
+    let data2 = vec![
         data[0].to_string(),
         data[1].to_string(),
         data[2].to_string(),
@@ -830,8 +788,8 @@ pub fn solve(data:&[String])
         data[3].to_string(),
         data[4].to_string(),
     ];
-*/
-//println!("part2:{}",part2(&data2[..]));
+
+    println!("part2:{}",part2(&data2[..]));
 }
 
 #[test]

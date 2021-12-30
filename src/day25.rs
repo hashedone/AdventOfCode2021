@@ -113,6 +113,7 @@ impl Sea
         moved
     }
 
+    #[allow(unused)]
     fn print(&self,round:i32)
     {
         println!("round:{}",round);
@@ -133,7 +134,7 @@ impl Sea
         let mut round = 0;
         let mut moved = true;
         
-        self.print(round);
+        //self.print(round);
 
         while moved
         {
