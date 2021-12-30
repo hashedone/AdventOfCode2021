@@ -6,8 +6,10 @@ struct Field
        ampho : Vec<(char,i32,i32)>,
         xpos : HashMap<char,usize>,
   final_code : usize,
-        cost : HashMap<usize,usize>,
+        cost : HashMap<usize,usize>,       
 }
+
+type SingleMove = (char,usize,i32,i32,i32,i32);
 
 impl Field
 {
@@ -38,7 +40,7 @@ impl Field
             }                
         }
 
-        res.ampho.sort();
+        res.ampho.sort_unstable();
         println!("{:?}",res.ampho);
 
         res.xpos.insert('A', 3);
@@ -130,7 +132,6 @@ impl Field
                              let t = field[y0 as usize][x0 as usize];
         field[y0 as usize][x0 as usize] = field[y1 as usize][x1 as usize];
         field[y1 as usize][x1 as usize] = t;
-        //std::mem::swap(x, y)
     }
 
     fn clean_road(&self,x0:usize,y0:usize,x1:usize,y1:usize)->bool {
@@ -141,9 +142,7 @@ impl Field
             if y1==1 {
                 if self.field[y][x0 as usize]!='.' { return false; }
             }
-            else {
-                if self.field[y][x1 as usize]!='.' { return false; }
-            }
+            else if self.field[y][x1 as usize]!='.' { return false; }            
         }
 
         if y0==3 && self.field[y0-1][x0 as usize]!='.' { return false; }
@@ -153,9 +152,6 @@ impl Field
     
     fn good_move(&self,c:char,x0:i32,y0:i32,x1:i32,y1:i32)->bool
     {
-        if y1<1 || y1>3 { return false; }
-        if y0<1 || y0>3 { return false; }
-
         if x0==x1 { return false; }
         if y0==y1 { return false; }
 
@@ -188,14 +184,8 @@ impl Field
             if y0==2 && self.field[(y0-1) as usize][x0 as usize]!='.' { return false; }
         }
 
-        if y1==2 && self.field[3 as usize][x1 as usize]!='.'
-        {
-            if self.field[3 as usize][x1 as usize]!=c { return false;}
-        }
-
-        if y0==1 && y1==2 {
-            if self.field[3 as usize][x1 as usize]=='.' { return false; }
-        }
+        if y1==2 && self.field[3][x1 as usize]!='.' && self.field[3][x1 as usize]!=c { return false;}
+        if y0==1 && y1==2 && self.field[3][x1 as usize]=='.' { return false; }
 
         if self.field[y1 as usize][x1 as usize]!='.' { return false; }
 
@@ -227,6 +217,7 @@ impl Field
         self.field[y1 as usize][x1 as usize]=='.'
     }
 
+    #[allow(unused)]
     fn print(&self,n:usize)
     {
         for y in self.field.iter() {
@@ -260,7 +251,7 @@ fn get_possible_moves(y:i32)->Vec<(i32,i32)>
                     (9,2),
                     ];
     }
-    panic!("wat?");
+    //panic!("wat?");
     vec![]
 }
 
@@ -269,19 +260,15 @@ fn go(depth     : usize,
       best      : &mut usize,
       f         : &mut Field,
       amph      : &mut Vec<(char,i32,i32)>,
-      moves     : &mut HashMap<usize,Vec<(char,usize,i32,i32,i32,i32)>>,
+      moves     : &mut HashMap<usize,Vec<SingleMove>>,
       cost      : usize)
 {
     if cost >=*best      { return; }
     if depth>  max_depth { return; }
 
-//  if depth==2 {f.print(); return *best;}
-//  if depth>  2 { return *best; }
-
     let state = f.get_code();
-    //let mut res = *best;
 
-    let current_cost = *f.cost.get(&state).unwrap_or(&best);
+    let current_cost = *f.cost.get(&state).unwrap_or(best);
     if cost>=current_cost { return; }
 
     f.cost.insert(state,cost);
@@ -298,17 +285,16 @@ fn go(depth     : usize,
         println!("depth:{} max:{}  moves:{}",depth,max_depth, f.cost.len());
     }
 
-    let mo = moves.get(&state);
-
+    //let mo = moves.get(&state);
    // if mo==None
     {
         let mut good_moves = vec![];
 
-        for id in 0..amph.len()
+        for (id,amph) in amph.iter().enumerate()
         {
-            let c = amph[id].0; //*ch;
-            let x0 = amph[id].1; //*x;
-            let y0 = amph[id].2; //;*y;
+            let c = amph.0;
+            let x0 = amph.1;
+            let y0 = amph.2;
 
             for mo in get_possible_moves(y0)
             {
@@ -323,36 +309,24 @@ fn go(depth     : usize,
                 }
             }
         }
-        //if moves.get(&state)!=None {
-          //  panic!("none");
-        //}
+
         moves.insert(state, good_moves);
     }
 
-    if moves.get(&state).unwrap().len()==0 
+    if moves.get(&state).unwrap().is_empty()
     {
         return;
     }
 
     let good_moves2 = moves.get(&state).unwrap().clone();
 
-    for (num,(c,ids,x0,y0,x1,y1)) in good_moves2.into_iter().enumerate()
+    for (c,ids,x0,y0,x1,y1) in good_moves2.into_iter()
     {
-        ///f.print(num);
-
-        let ox0 = x0;
-        let ox1 = x1;
-        let oy0 = y0;
-        let oy1 = y1;
-
-        Field::swap(&mut f.field,ox0,oy0,ox1,oy1);
-        //f.print(num);
+        Field::swap(&mut f.field,x0,y0,x1,y1);
 
         let new_cost = cost + Field::get_cost(c,x0,y0,x1,y1);
 
-        let ol1 = amph[ids].1;
-        let ol2 = amph[ids].2;
-
+        /*
         if x0!=ol1 || y0!=ol2 
         {
             println!("error id:{} letter:{}",ids,c);
@@ -363,77 +337,45 @@ fn go(depth     : usize,
             println!("{} {}",ol1,ol2);
             panic!("e");
         }        
-        
-
         if f.field[amph[ids].2 as usize][amph[ids].1 as usize]!='.'
         {
             panic!("eeeeeee");
         }
+         */
 
         amph[ids].1 = x1;
         amph[ids].2 = y1;
         go(depth+1,max_depth,best,f,amph,moves,new_cost);        
-        amph[ids].1 = ol1;
-        amph[ids].2 = ol2;
+        amph[ids].1 = x0;
+        amph[ids].2 = y0;
 
         //res = res.min(nc);
 
         //Field::swap(&mut f.field,x0,y0,x1,y1);
-        Field::swap(&mut f.field,ox0,oy0,ox1,oy1);
+        Field::swap(&mut f.field,x0,y0,x1,y1);
     }
-    
-    
 }
 
 pub fn part1(data:&[String])->usize
 {
     let mut f = Field::new(data);
     let mut am = f.ampho.clone();
-    let mut best = 15540;//usize::MAX;
-
-//    let mut max_depth=14; nothing found
-
-//depth:2 max:16  moves:4922724
-//part1:14019
-//Elapsed: 585.809 secs
-
-//let mut max_depth=16;
-    let mut max_depth=16;
-//       15540 too high
-//       15378 too high
-//       15358
-// found:15022
-// found:15020
-// found:14041
-// found:14021
-// found:14019 too low
-
-    //let mut tab =vec![];
-  //  loop 
-//    {
-    //let ccc = go(0,7,&mut best,&mut f,&mut am,0);
-
-    let mut moves: HashMap<usize,Vec<(char,usize,i32,i32,i32,i32)>> = HashMap::new();
-    let ccc2 = go(0,max_depth,&mut best,&mut f,&mut am,&mut moves,0);
-    //    max_depth+=1;
-
-  //      if max_depth>100 {break;}
-//    };
-    
-   
-    //println!("{:?}",ccc);
-   // go_bsf(0,max_depth,&mut best,&mut f,&mut am,0);
+    let mut best = 15540;
+    let max_depth=16;
+    let mut moves: HashMap<usize,Vec<SingleMove>> = HashMap::new();
+    go(0,max_depth,&mut best,&mut f,&mut am,&mut moves,0);
     best
 }
 
-pub fn part2(_data:&[String])->usize
+
+pub fn part2(data:&[String])->usize
 {
     let mut f = Field::new(data);
     let mut am = f.ampho.clone();
     let mut best = 15540;//usize::MAX;
 
-    let mut max_depth=32;
-    let mut moves: HashMap<usize,Vec<(char,usize,i32,i32,i32,i32)>> = HashMap::new();
+    let max_depth=32;
+    let mut moves: HashMap<usize,Vec<SingleMove>> = HashMap::new();
     go(0,max_depth,&mut best,&mut f,&mut am,&mut moves,0);
     best
 }
@@ -450,11 +392,11 @@ pub fn solve(data:&[String])
 fn test1()
 {
     let v = vec![
-"#############".to_string(),
-"#A..........#".to_string(),
-"###.#B#C#D###".to_string(),
-"  #A#B#C#D#".to_string(),
-"  #########".to_string(),
+    "#############".to_string(),
+    "#A..........#".to_string(),
+    "###.#B#C#D###".to_string(),
+    "  #A#B#C#D#".to_string(),
+    "  #########".to_string(),
     ];
     assert_eq!(part1(&v),3);
 }
@@ -464,11 +406,11 @@ fn test1()
 fn test2()
 {
     let v = vec![
-"#############".to_string(),
-"#A..B.......#".to_string(),
-"###.#.#C#D###".to_string(),
-"  #A#B#C#D#".to_string(),
-"  #########".to_string(),
+    "#############".to_string(),
+    "#A..B.......#".to_string(),
+    "###.#.#C#D###".to_string(),
+    "  #A#B#C#D#".to_string(),
+    "  #########".to_string(),
     ];
     assert_eq!(part1(&v),23);
 }
@@ -478,11 +420,11 @@ fn test2()
 fn test3()
 {
     let v = vec![
-"#############".to_string(),
-"#...........#".to_string(),
-"###D#B#C#A###".to_string(),
-"  #A#B#C#D#".to_string(),
-"  #########".to_string(),
+    "#############".to_string(),
+    "#...........#".to_string(),
+    "###D#B#C#A###".to_string(),
+    "  #A#B#C#D#".to_string(),
+    "  #########".to_string(),
     ];
     assert_eq!(part1(&v),8+2 +8000);
 }
@@ -492,14 +434,15 @@ fn test3()
 fn testb4()
 {
     let v = vec![
-"#############".to_string(),
-"#...........#".to_string(),
-"###B#C#B#D###".to_string(),
-"  #A#D#C#A#".to_string(),
-"  #########".to_string(),
+    "#############".to_string(),
+    "#...........#".to_string(),
+    "###B#C#B#D###".to_string(),
+    "  #A#D#C#A#".to_string(),
+    "  #########".to_string(),
     ];
     assert_eq!(part1(&v),12521);
 }
+/*
 
 #[test]
 fn test_part2_1()
@@ -515,140 +458,4 @@ fn test_part2_1()
     ];
     assert_eq!(part2(&v),44169);
 }
-
-
-/*
-
-#[test]
-fn test3()
-{
-    let v = vec![
-"#############".to_string(),
-"#...........#".to_string(),
-"###B#C#B#D###".to_string(),
-"  #A#D#C#A#".to_string(),
-"  #########".to_string(),
-    ];
-    assert_eq!(part1(&v),12521);
-}
- */
-
-
-
-
-
-
-
-/*
-#############
-#...........#
-###C#A#B#D###
-  #D#C#A#B#
-  #########
-
-#############
-#.........D.#
-###C#A#B#.###
-  #D#C#A#B#
-  #########  
-
-  2d
-
-#############
-#.A.......D.#
-###C#.#B#.###
-  #D#C#A#B#
-  #########  
-
-  4a
-
-#############
-#.A.C.....D.#
-###C#.#B#.###
-  #D#.#A#B#
-  #########  
- 3c
-
-#############
-#.A.C.....D.#
-###C#B#.#.###
-  #D#B#A#.#
-  #########  
- 
-5b 7b
-
-#############
-#.A.C.......#
-###C#B#.#.###
-  #D#B#A#D#
-  #########  
-3d
-
-#############
-#.A.C...A...#
-###C#B#.#.###
-  #D#B#.#D#
-  #########  
-3a
-
-#############
-#.A.....A...#
-###.#B#C#.###
-  #D#B#C#D#
-  #########  
-5c 6c
-
-#############
-#AA.........#
-###.#B#C#.###
-  #D#B#C#D#
-  #########  
-1a 6a 
-
-#############
-#AA.........#
-###.#B#C#D###
-  #.#B#C#D#
-  #########  
-9d
-
-#############
-#...........#
-###A#B#C#D###
-  #A#B#C#D#
-  #########  
-3a 3a
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-20a
-12b
-14c
-14d
-
-14000
- 1400
-  120
-   20
-
-15540 too high
-
-17538
  */
