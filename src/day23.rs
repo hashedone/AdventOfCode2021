@@ -1,4 +1,3 @@
-//use crate::tools;
 use std::collections::HashMap;
 
 struct Field
@@ -49,18 +48,7 @@ impl Field
     
         res
     }
-    //0.
-    //1A
-    //2B
-    //3C
-    //4D
-
-    //  0123456789012
-    // 0#############
-    // 1#...........#
-    // 2###C#A#B#D###
-    // 3  #D#C#A#B#
-    // 4  #########    
+ 
     fn code(&self,x:usize,y:usize)->usize
     {
         match self.field[y][x] 
@@ -173,13 +161,10 @@ impl Field
 
         if self.field[y0 as usize][x0 as usize]=='.' 
         { 
-            //println!("{:?}",self.amph);
-            
-            self.print(999);
-            println!("{},{}->{},{}",x0,y0,x1,y1); 
+            //self.print(999);
+            //println!("{},{}->{},{}",x0,y0,x1,y1); 
             panic!("xy0");
-            return false; 
-            
+            //return false;             
         }
 
         if y0==3 {
@@ -238,28 +223,7 @@ impl Field
                 return self.field[(y1+1) as usize][x1 as usize]=='.' && self.field[y1 as usize][x1 as usize]=='.';
             }
         }
-/*
-        match y1 
-        {
-            1=> {
-                if y0==1 
-                {
-                    return self.field[y1][x1]=='.';
-                }
-                else
-                if y0==3 {
-                    return self.field[2][x1]=='.' && self.field[y1][x1]=='.';
-                }
-                else {
-                    return self.field[y1][x1]=='.';
-                }
-                
-            },
-            2=> {},
-            3=> {},
-            _=> panic!("error"),
-        }
-        */
+
         self.field[y1 as usize][x1 as usize]=='.'
     }
 
@@ -336,7 +300,7 @@ fn go(depth     : usize,
 
     let mo = moves.get(&state);
 
-    if mo==None
+   // if mo==None
     {
         let mut good_moves = vec![];
 
@@ -359,9 +323,9 @@ fn go(depth     : usize,
                 }
             }
         }
-        if moves.get(&state)!=None {
-            panic!("none");
-        }
+        //if moves.get(&state)!=None {
+          //  panic!("none");
+        //}
         moves.insert(state, good_moves);
     }
 
@@ -433,9 +397,11 @@ pub fn part1(data:&[String])->usize
 //part1:14019
 //Elapsed: 585.809 secs
 
+//let mut max_depth=16;
     let mut max_depth=16;
 //       15540 too high
 //       15378 too high
+//       15358
 // found:15022
 // found:15020
 // found:14041
@@ -462,7 +428,14 @@ pub fn part1(data:&[String])->usize
 
 pub fn part2(_data:&[String])->usize
 {
-0
+    let mut f = Field::new(data);
+    let mut am = f.ampho.clone();
+    let mut best = 15540;//usize::MAX;
+
+    let mut max_depth=32;
+    let mut moves: HashMap<usize,Vec<(char,usize,i32,i32,i32,i32)>> = HashMap::new();
+    go(0,max_depth,&mut best,&mut f,&mut am,&mut moves,0);
+    best
 }
 
 #[allow(unused)]
@@ -526,6 +499,21 @@ fn testb4()
 "  #########".to_string(),
     ];
     assert_eq!(part1(&v),12521);
+}
+
+#[test]
+fn test_part2_1()
+{
+    let v = [
+    "#############".to_string(),
+    "#...........#".to_string(),
+    "###B#C#B#D###".to_string(),
+    "  #D#C#B#A#".to_string(),
+    "  #D#B#A#C#".to_string(),
+    "  #A#D#C#A#".to_string(),
+    "  #########".to_string()
+    ];
+    assert_eq!(part2(&v),44169);
 }
 
 
