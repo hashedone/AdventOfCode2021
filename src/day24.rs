@@ -156,7 +156,7 @@ fn calc(hash:&mut HashMap<(i32,usize),bool>,pos:usize,yo:i32,zo:i32,delta:i32)->
     
     while (0..=9).contains(&digit)
     {
-        let mut x;// = xo;
+       // let mut x;// = xo;
         let mut y = yo;
         let mut z = zo;
         let     w = digit as i32;
@@ -164,7 +164,7 @@ fn calc(hash:&mut HashMap<(i32,usize),bool>,pos:usize,yo:i32,zo:i32,delta:i32)->
         //x*=0;
         //x+=z;
         //x%=26;
-        x=z%26;
+        let mut x=z%26;
         z/=div_z[pos];
         x+=add_x[pos];
         x = if x==w {1} else {0};

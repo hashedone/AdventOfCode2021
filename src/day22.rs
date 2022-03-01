@@ -92,7 +92,7 @@ pub fn solve1(data:&[String])->i64
 fn get_xes(boxes:&[Box],id:char)->Vec<i32>
 {
     boxes.iter()
-         .map(|e| 
+         .flat_map(|e| 
             match id {
                 'x' => [e.x0,e.x1],
                 'y' => [e.y0,e.y1],
@@ -100,7 +100,6 @@ fn get_xes(boxes:&[Box],id:char)->Vec<i32>
                  _  => panic!("wrong code"),
             }              
          )
-         .flatten()
          .collect()
 }
 
@@ -108,7 +107,7 @@ fn get_span(res:&[i32])->Vec<(i32,i32)>
 {
     res.iter()
        .enumerate()
-       .map( |(id,&e)|
+       .flat_map( |(id,&e)|
         if id+1<res.len()
         {
             let    n = res[id+1];
@@ -132,7 +131,6 @@ fn get_span(res:&[i32])->Vec<(i32,i32)>
             vec![(e,1)]
         }
        )       
-       .flatten()
        .collect::<Vec<(i32,i32)>>()
 }
 

@@ -12,8 +12,8 @@ fn draw(data:&[String],diagonal:bool)->i32
 
     for l in data {
         let  v: Vec<_>  = l.split(" -> ").collect();
-        let (p1_x,p1_y) = get_point(&v[0].to_string());
-        let (p2_x,p2_y) = get_point(&v[1].to_string());
+        let (p1_x,p1_y) = get_point(v[0]);
+        let (p2_x,p2_y) = get_point(v[1]);
 
         let (dx,dy) = (i32::signum(p2_x-p1_x),i32::signum(p2_y-p1_y));
         let n = if !diagonal && dx!=0 && dy!=0 { 0 } 

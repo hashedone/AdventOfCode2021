@@ -5,8 +5,8 @@ fn add(a:&str,b:&str)->String
 
 fn is_split(s:&str)->bool
 {
-    s.replace("[", "")
-     .replace("]", "")
+    s.replace('[', "")
+     .replace(']', "")
      .split(',')
      .map(|s| s.parse::<i32>().unwrap())
      .any(|n| n>=10)

@@ -32,8 +32,8 @@ fn sort_str(s:&str)->String
 fn calc(line : String)->i32
 {
     let cmd  : Vec<&str> = line.split('|').collect();
-    let cmd1 : Vec<_>    = cmd[0].split_whitespace().map(|s| sort_str(s)).collect();
-    let cmd2 : Vec<_>    = cmd[1].split_whitespace().map(|s| sort_str(s)).collect();
+    let cmd1 : Vec<_>    = cmd[0].split_whitespace().map(sort_str).collect();
+    let cmd2 : Vec<_>    = cmd[1].split_whitespace().map(sort_str).collect();
 
     let digits : HashMap<&str,i32> = 
     [    
